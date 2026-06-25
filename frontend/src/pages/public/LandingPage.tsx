@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 import { motion } from 'framer-motion';
 import {
   PaintBucket,
@@ -91,10 +92,28 @@ const FLOATING_CARDS = [
 
 export function LandingPage() {
   const [categories, setCategories] = useState<Category[]>([]);
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     categoryService.getAll().then(setCategories).catch(() => {});
   }, []);
+
+  const handleClientCTA = () => {
+    if (user) {
+      navigate(user.role === 'client' ? '/cliente/solicitacoes/nova' : user.role === 'provider' ? '/prestador' : '/admin');
+    } else {
+      navigate('/cadastro');
+    }
+  };
+
+  const handleProviderCTA = () => {
+    if (user) {
+      navigate(user.role === 'provider' ? '/prestador' : user.role === 'client' ? '/cliente' : '/admin');
+    } else {
+      navigate('/cadastro');
+    }
+  };
 
   return (
     <div className="overflow-hidden">
@@ -142,25 +161,23 @@ export function LandingPage() {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link to="/cadastro">
-                  <Button
-                    size="lg"
-                    className="bg-success hover:bg-success-dark text-white border-0 shadow-glow w-full sm:w-auto text-base"
-                  >
-                    Publicar um serviço
-                    <ArrowRight className="h-5 w-5" />
-                  </Button>
-                </Link>
-                <Link to="/cadastro">
-                  <Button
-                    size="lg"
-                    variant="ghost"
-                    className="border border-white/20 text-white hover:bg-white/10 w-full sm:w-auto text-base"
-                  >
-                    Sou prestador
-                    <ChevronRight className="h-5 w-5" />
-                  </Button>
-                </Link>
+                <Button
+                  size="lg"
+                  onClick={handleClientCTA}
+                  className="bg-success hover:bg-success-dark text-white border-0 shadow-glow w-full sm:w-auto text-base"
+                >
+                  Publicar um serviço
+                  <ArrowRight className="h-5 w-5" />
+                </Button>
+                <Button
+                  size="lg"
+                  variant="ghost"
+                  onClick={handleProviderCTA}
+                  className="border border-white/20 text-white hover:bg-white/10 w-full sm:w-auto text-base"
+                >
+                  Sou prestador
+                  <ChevronRight className="h-5 w-5" />
+                </Button>
               </div>
             </motion.div>
 
@@ -392,15 +409,14 @@ export function LandingPage() {
             <p className="text-white/80 text-lg mb-10 max-w-xl mx-auto leading-relaxed">
               Cadastre-se gratuitamente e encontre o profissional certo para o seu projeto.
             </p>
-            <Link to="/cadastro">
-              <Button
-                size="lg"
-                className="bg-white text-success-dark hover:bg-slate-50 font-bold border-0 shadow-premium text-base px-10"
-              >
-                Criar conta grátis
-                <ArrowRight className="h-5 w-5" />
-              </Button>
-            </Link>
+            <Button
+              size="lg"
+              onClick={handleClientCTA}
+              className="bg-white text-success-dark hover:bg-slate-50 font-bold border-0 shadow-premium text-base px-10"
+            >
+              {user ? 'Ir para o painel' : 'Criar conta grátis'}
+              <ArrowRight className="h-5 w-5" />
+            </Button>
           </AnimatedSection>
         </div>
       </section>

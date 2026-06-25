@@ -3,11 +3,11 @@ import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/Button';
-import { Wrench, Menu, X } from 'lucide-react';
+import { Wrench, Menu, X, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function PublicLayout() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
@@ -30,6 +30,11 @@ export function PublicLayout() {
     if (user.role === 'client') return '/cliente';
     if (user.role === 'provider') return '/prestador';
     return '/admin';
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
   };
 
   return (
@@ -68,30 +73,44 @@ export function PublicLayout() {
             </nav>
 
             <div className="hidden md:flex items-center gap-3">
-              {user && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => navigate(getDashboardPath())}
-                  className="border-white/20 bg-white/10 text-white hover:bg-white/20"
-                >
-                  Meu painel
-                </Button>
+              {user ? (
+                <>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => navigate(getDashboardPath())}
+                    className="border-white/20 bg-white/10 text-white hover:bg-white/20"
+                  >
+                    Meu painel
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleLogout}
+                    className="text-white/80 hover:text-white hover:bg-white/10 gap-1.5"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Sair
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    to="/login"
+                    className="text-white/80 hover:text-white text-sm font-medium transition-colors px-3 py-2"
+                  >
+                    Entrar
+                  </Link>
+                  <Link to="/cadastro">
+                    <Button
+                      size="sm"
+                      className="bg-success hover:bg-success-dark text-white border-0 shadow-glow"
+                    >
+                      Cadastrar-se
+                    </Button>
+                  </Link>
+                </>
               )}
-              <Link
-                to="/login"
-                className="text-white/80 hover:text-white text-sm font-medium transition-colors px-3 py-2"
-              >
-                Entrar
-              </Link>
-              <Link to="/cadastro">
-                <Button
-                  size="sm"
-                  className="bg-success hover:bg-success-dark text-white border-0 shadow-glow"
-                >
-                  Cadastrar-se
-                </Button>
-              </Link>
             </div>
 
             {/* Mobile menu button */}
@@ -126,26 +145,40 @@ export function PublicLayout() {
                   </>
                 )}
                 <div className="pt-2 border-t border-white/10 space-y-2">
-                  {user && (
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => navigate(getDashboardPath())}
-                      className="w-full border-white/20 bg-white/10 text-white hover:bg-white/20"
-                    >
-                      Meu painel
-                    </Button>
+                  {user ? (
+                    <>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => navigate(getDashboardPath())}
+                        className="w-full border-white/20 bg-white/10 text-white hover:bg-white/20"
+                      >
+                        Meu painel
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleLogout}
+                        className="w-full text-white/80 hover:text-white hover:bg-white/10 gap-1.5"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Sair
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Link to="/login" className="block">
+                        <Button variant="ghost" size="sm" className="w-full text-white hover:bg-white/10">
+                          Entrar
+                        </Button>
+                      </Link>
+                      <Link to="/cadastro" className="block">
+                        <Button size="sm" className="w-full bg-success hover:bg-success-dark text-white border-0">
+                          Cadastrar-se
+                        </Button>
+                      </Link>
+                    </>
                   )}
-                  <Link to="/login" className="block">
-                    <Button variant="ghost" size="sm" className="w-full text-white hover:bg-white/10">
-                      Entrar
-                    </Button>
-                  </Link>
-                  <Link to="/cadastro" className="block">
-                    <Button size="sm" className="w-full bg-success hover:bg-success-dark text-white border-0">
-                      Cadastrar-se
-                    </Button>
-                  </Link>
                 </div>
               </div>
             </motion.div>
