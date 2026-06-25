@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
-import { Wrench, Mail, Lock, User, HardHat, Shield, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Wrench, Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
 
 export function LoginPage() {
   const { login, user } = useAuth();
@@ -34,18 +34,6 @@ export function LoginPage() {
       setLoading(false);
     }
   };
-
-  const fillDemo = (demoEmail: string) => {
-    setEmail(demoEmail);
-    setPassword('123456');
-    setError('');
-  };
-
-  const DEMO_USERS = [
-    { role: 'Admin',     email: 'admin@maocerta.com',    icon: Shield,   color: 'from-red-500 to-rose-600',    glow: 'rgba(239,68,68,0.3)'    },
-    { role: 'Cliente',   email: 'cliente@maocerta.com',  icon: User,     color: 'from-blue-500 to-blue-600',   glow: 'rgba(59,130,246,0.3)'   },
-    { role: 'Prestador', email: 'prestador@maocerta.com',icon: HardHat,  color: 'from-emerald-500 to-teal-600',glow: 'rgba(16,185,129,0.3)'   },
-  ];
 
   return (
     <div
@@ -163,40 +151,6 @@ export function LoginPage() {
           </p>
         </div>
 
-        {/* Demo users */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25, duration: 0.4 }}
-          className="rounded-2xl border border-white/8 p-5"
-          style={{ background: 'rgba(255,255,255,0.02)', backdropFilter: 'blur(12px)' }}
-        >
-          <p className="text-[11px] font-semibold text-white/30 mb-3 uppercase tracking-widest flex items-center gap-2">
-            <Shield className="h-3.5 w-3.5" />
-            Contas demo para teste
-          </p>
-          <div className="space-y-1.5">
-            {DEMO_USERS.map((demo) => (
-              <button
-                key={demo.email}
-                onClick={() => fillDemo(demo.email)}
-                className="flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-xl
-                  border border-transparent hover:border-white/8 hover:bg-white/5 transition-all group"
-              >
-                <div className={`flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br ${demo.color} shadow-md shrink-0`}
-                  style={{ boxShadow: `0 4px 12px -2px ${demo.glow}` }}>
-                  <demo.icon className="h-3.5 w-3.5 text-white" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <span className="text-xs font-semibold text-white/60">{demo.role}</span>
-                  <span className="text-xs text-white/30 ml-2">{demo.email}</span>
-                </div>
-                <span className="text-[10px] text-white/20 opacity-0 group-hover:opacity-100 transition-opacity">
-                  Usar →
-                </span>
-              </button>
-            ))}
-          </div>
-        </motion.div>
       </motion.div>
     </div>
   );
