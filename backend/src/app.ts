@@ -14,7 +14,19 @@ const app = express();
 app.use(helmet());
 app.use(
   cors({
-    origin: env.FRONTEND_URL,
+    origin: (origin, callback) => {
+      // Permite: sem origin (curl, Postman), localhost e qualquer subdomínio .vercel.app
+      if (
+        !origin ||
+        origin.includes('localhost') ||
+        origin.includes('vercel.app') ||
+        origin === env.FRONTEND_URL
+      ) {
+        callback(null, true);
+      } else {
+        callback(new Error(`CORS: origem não permitida — ${origin}`));
+      }
+    },
     credentials: true,
   })
 );
