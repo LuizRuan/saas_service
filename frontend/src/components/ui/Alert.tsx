@@ -1,32 +1,41 @@
-import { ReactNode } from 'react';
-import { clsx } from 'clsx';
-import { AlertCircle, CheckCircle, Info, XCircle } from 'lucide-react';
-
-type AlertVariant = 'info' | 'success' | 'warning' | 'error';
+import { AlertCircle, CheckCircle2, Info, TriangleAlert } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface AlertProps {
-  variant?: AlertVariant;
-  title?: string;
-  children: ReactNode;
+  type: 'error' | 'success' | 'warning' | 'info';
+  message: string;
   className?: string;
 }
 
-const config: Record<AlertVariant, { style: string; Icon: typeof Info }> = {
-  info: { style: 'bg-blue-50 border-blue-200 text-blue-800', Icon: Info },
-  success: { style: 'bg-trust-50 border-trust-100 text-trust-800', Icon: CheckCircle },
-  warning: { style: 'bg-yellow-50 border-yellow-200 text-yellow-800', Icon: AlertCircle },
-  error: { style: 'bg-red-50 border-red-200 text-red-800', Icon: XCircle },
+const config = {
+  error: {
+    icon: AlertCircle,
+    classes: 'bg-red-50 border-red-300 text-red-800',
+    iconClass: 'text-danger',
+  },
+  success: {
+    icon: CheckCircle2,
+    classes: 'bg-green-50 border-green-300 text-green-800',
+    iconClass: 'text-success',
+  },
+  warning: {
+    icon: TriangleAlert,
+    classes: 'bg-orange-50 border-orange-300 text-orange-800',
+    iconClass: 'text-warning',
+  },
+  info: {
+    icon: Info,
+    classes: 'bg-blue-50 border-blue-300 text-blue-800',
+    iconClass: 'text-blue-600',
+  },
 };
 
-export default function Alert({ variant = 'info', title, children, className }: AlertProps) {
-  const { style, Icon } = config[variant];
+export function Alert({ type, message, className }: AlertProps) {
+  const { icon: Icon, classes, iconClass } = config[type];
   return (
-    <div className={clsx('flex gap-3 p-4 rounded-xl border', style, className)}>
-      <Icon className="w-5 h-5 flex-shrink-0 mt-0.5" />
-      <div className="flex-1 text-sm">
-        {title && <p className="font-semibold mb-1">{title}</p>}
-        <div>{children}</div>
-      </div>
+    <div className={cn('flex items-start gap-3 rounded-lg border px-4 py-3 text-sm', classes, className)}>
+      <Icon className={cn('mt-0.5 h-4 w-4 shrink-0', iconClass)} />
+      <span>{message}</span>
     </div>
   );
 }

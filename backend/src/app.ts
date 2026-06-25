@@ -2,42 +2,54 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import rateLimit from 'express-rate-limit';
+import 'express-async-errors';
+
 import { env } from './config/env';
-import authRoutes from './routes/authRoutes';
-import categoryRoutes from './routes/categoryRoutes';
-import { notFoundHandler, globalErrorHandler } from './middlewares/errorMiddleware';
+import { errorHandler } from './middlewares/errorHandler';
+import routes from './routes';
 
 const app = express();
 
+// Middlewares globais
 app.use(helmet());
-app.use(cors({ origin: env.corsOrigin, credentials: true }));
-
 app.use(
-  rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 100,
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: { success: false, error: 'Muitas requisições. Tente novamente em alguns minutos.' },
+  cors({
+    origin: env.FRONTEND_URL,
+    credentials: true,
   })
 );
-
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-if (env.isDevelopment) {
+// Logging
+if (env.NODE_ENV !== 'test') {
   app.use(morgan('dev'));
 }
 
-app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString(), env: env.nodeEnv });
+// Uploads locais (MVP)
+app.use('/uploads', express.static('uploads'));
+
+// Rotas
+app.use('/api', routes);
+
+// Rota raiz
+app.get('/', (_req, res) => {
+  res.json({
+    name: 'MãoCerta API',
+    version: '1.0.0',
+    description: 'Plataforma de contratação de prestadores de serviço locais',
+  });
 });
 
-app.use('/api/auth', authRoutes);
-app.use('/api/categories', categoryRoutes);
+// 404
+app.use((_req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'Rota não encontrada',
+  });
+});
 
-app.use(notFoundHandler);
-app.use(globalErrorHandler);
+// Error handler global (deve ser o último middleware)
+app.use(errorHandler);
 
 export default app;

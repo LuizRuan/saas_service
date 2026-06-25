@@ -1,9 +1,11 @@
-import { HTMLAttributes } from 'react';
-import { clsx } from 'clsx';
+import { type ReactNode } from 'react';
+import { cn } from '@/lib/utils';
 
-interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  hover?: boolean;
+interface CardProps {
+  children: ReactNode;
+  className?: string;
   padding?: 'none' | 'sm' | 'md' | 'lg';
+  hover?: boolean;
 }
 
 const paddings = {
@@ -13,23 +15,15 @@ const paddings = {
   lg: 'p-8',
 };
 
-export default function Card({
-  hover = false,
-  padding = 'md',
-  children,
-  className,
-  ...props
-}: CardProps) {
+export function Card({ children, className, padding = 'md', hover = false }: CardProps) {
   return (
     <div
-      className={clsx(
-        'bg-white rounded-xl border border-surface-200',
-        'shadow-[0_1px_3px_0_rgb(0_0_0/0.06),0_1px_2px_-1px_rgb(0_0_0/0.06)]',
-        hover && 'hover:shadow-[0_4px_12px_0_rgb(0_0_0/0.10)] hover:-translate-y-0.5 transition-all duration-200 cursor-pointer',
+      className={cn(
+        'rounded-2xl border border-slate-100 bg-white shadow-card',
+        hover && 'transition-all duration-300 hover:shadow-card-hover hover:-translate-y-0.5',
         paddings[padding],
         className
       )}
-      {...props}
     >
       {children}
     </div>

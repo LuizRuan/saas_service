@@ -1,24 +1,31 @@
-import './config/env';
 import app from './app';
-import { connectDatabase } from './config/database';
-import { seedAdmin } from './seeds/adminSeeder';
-import { seedCategories } from './seeds/categorySeeder';
 import { env } from './config/env';
+import { connectDatabase } from './config/database';
+import { runSeed } from './seeds/seed';
 
 async function bootstrap(): Promise<void> {
+  // Conecta ao banco de dados
   await connectDatabase();
 
-  await seedAdmin();
-  await seedCategories();
+  // Roda seed automaticamente (idempotente — não duplica dados)
+  await runSeed();
 
-  app.listen(env.port, () => {
-    console.log(`🚀 Servidor rodando na porta ${env.port} [${env.nodeEnv}]`);
-    console.log(`📡 API: http://localhost:${env.port}/api`);
-    console.log(`❤️  Health: http://localhost:${env.port}/health`);
+  // Inicia o servidor
+  app.listen(env.PORT, () => {
+    console.log(`
+╔══════════════════════════════════════════════╗
+║          🔧 MãoCerta API v1.0.0             ║
+║                                              ║
+║   Ambiente: ${env.NODE_ENV.padEnd(32)}║
+║   Porta:    ${String(env.PORT).padEnd(32)}║
+║   URL:      http://localhost:${String(env.PORT).padEnd(19)}║
+║                                              ║
+╚══════════════════════════════════════════════╝
+    `);
   });
 }
 
 bootstrap().catch((err) => {
-  console.error('❌ Falha ao iniciar o servidor:', err);
+  console.error('❌ Erro ao iniciar servidor:', err);
   process.exit(1);
 });

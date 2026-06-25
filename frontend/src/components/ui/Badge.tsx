@@ -1,28 +1,30 @@
-import { clsx } from 'clsx';
+import { type ReactNode } from 'react';
+import { cn } from '@/lib/utils';
 
-type BadgeVariant = 'default' | 'success' | 'warning' | 'danger' | 'info' | 'neutral';
+export type BadgeColor = 'blue' | 'green' | 'yellow' | 'orange' | 'red' | 'gray' | 'purple';
 
 interface BadgeProps {
-  children: React.ReactNode;
-  variant?: BadgeVariant;
+  color?: BadgeColor;
+  children: ReactNode;
   className?: string;
 }
 
-const variants: Record<BadgeVariant, string> = {
-  default: 'bg-primary-100 text-primary-800 border-primary-200',
-  success: 'bg-trust-50 text-trust-700 border-trust-100',
-  warning: 'bg-yellow-50 text-yellow-700 border-yellow-200',
-  danger: 'bg-red-50 text-red-700 border-red-200',
-  info: 'bg-blue-50 text-blue-700 border-blue-200',
-  neutral: 'bg-surface-100 text-surface-700 border-surface-200',
+const colors: Record<BadgeColor, string> = {
+  blue:   'bg-blue-100 text-blue-700',
+  green:  'bg-green-100 text-green-700',
+  yellow: 'bg-yellow-100 text-yellow-800',
+  orange: 'bg-orange-100 text-orange-700',
+  red:    'bg-red-100 text-red-700',
+  gray:   'bg-slate-100 text-slate-600',
+  purple: 'bg-purple-100 text-purple-700',
 };
 
-export default function Badge({ children, variant = 'default', className }: BadgeProps) {
+export function Badge({ color = 'gray', children, className }: BadgeProps) {
   return (
     <span
-      className={clsx(
-        'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border',
-        variants[variant],
+      className={cn(
+        'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
+        colors[color],
         className
       )}
     >

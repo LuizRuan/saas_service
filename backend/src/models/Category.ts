@@ -1,24 +1,51 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose';
 
 export interface ICategory extends Document {
   name: string;
   slug: string;
-  description?: string;
+  description: string;
   active: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
 
-const CategorySchema = new Schema<ICategory>(
+const categorySchema = new Schema<ICategory>(
   {
-    name: { type: String, required: true, trim: true },
-    slug: { type: String, required: true, unique: true, lowercase: true, trim: true },
-    description: { type: String, trim: true },
-    active: { type: Boolean, default: true },
+    name: {
+      type: String,
+      required: [true, 'Nome da categoria é obrigatório'],
+      trim: true,
+      unique: true,
+    },
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
+    description: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    active: {
+      type: Boolean,
+      default: true,
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: {
+      transform(_doc, ret: any) {
+        delete ret.__v;
+        return ret;
+      },
+    },
+  }
 );
 
-CategorySchema.index({ active: 1 });
+categorySchema.index({ slug: 1 });
+categorySchema.index({ active: 1 });
 
-export const Category = mongoose.model<ICategory>('Category', CategorySchema);
+export const Category = mongoose.model<ICategory>('Category', categorySchema);

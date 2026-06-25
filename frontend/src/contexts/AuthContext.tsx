@@ -1,77 +1,74 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
-import type { AuthUser, LoginResponse } from '../types/auth';
-import { storage } from '../utils/storage';
-import { authService } from '../services/authService';
+import { createContext, useEffect, useState, useCallback, type ReactNode } from 'react';
+import { authService } from '@/services/auth.service';
+import type { RegisterClientData, RegisterProviderData, User } from '@/types';
 
-interface AuthContextValue {
-  user: AuthUser | null;
+interface AuthContextType {
+  user: User | null;
   token: string | null;
-  isAuthenticated: boolean;
   isLoading: boolean;
-  login(response: LoginResponse): void;
-  logout(): void;
-  refreshUser(): Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => void;
+  registerClient: (data: RegisterClientData) => Promise<void>;
+  registerProvider: (data: RegisterProviderData) => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextValue | null>(null);
+export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [token, setToken] = useState<string | null>(storage.getToken());
+  const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const navigate = useNavigate();
+
+  const persistAuth = useCallback((newToken: string, newUser: User) => {
+    localStorage.setItem('token', newToken);
+    setToken(newToken);
+    setUser(newUser);
+  }, []);
+
+  const clearAuth = useCallback(() => {
+    localStorage.removeItem('token');
+    setToken(null);
+    setUser(null);
+  }, []);
 
   useEffect(() => {
-    const savedToken = storage.getToken();
-    if (!savedToken) {
+    const storedToken = localStorage.getItem('token');
+    if (!storedToken) {
       setIsLoading(false);
       return;
     }
+    setToken(storedToken);
     authService
-      .getMe()
-      .then((u) => setUser(u))
-      .catch(() => {
-        storage.removeToken();
-        setToken(null);
-      })
+      .me()
+      .then((me) => setUser(me))
+      .catch(() => clearAuth())
       .finally(() => setIsLoading(false));
-  }, []);
+  }, [clearAuth]);
 
-  function login(response: LoginResponse) {
-    storage.setToken(response.token);
-    setToken(response.token);
-    setUser(response.user);
+  const login = async (email: string, password: string) => {
+    const result = await authService.login(email, password);
+    persistAuth(result.token, result.user);
+  };
 
-    const role = response.user.role;
-    if (role === 'admin') navigate('/admin');
-    else if (role === 'provider') navigate('/prestador/dashboard');
-    else navigate('/cliente');
-  }
+  const logout = () => {
+    clearAuth();
+  };
 
-  function logout() {
-    storage.removeToken();
-    setToken(null);
-    setUser(null);
-    navigate('/login');
-  }
+  const registerClient = async (data: RegisterClientData) => {
+    const result = await authService.registerClient(data);
+    persistAuth(result.token, result.user);
+  };
 
-  async function refreshUser() {
-    const updated = await authService.getMe();
-    setUser(updated);
-  }
+  const registerProvider = async (data: RegisterProviderData) => {
+    const result = await authService.registerProvider(data);
+    persistAuth(result.token, result.user);
+  };
 
   return (
     <AuthContext.Provider
-      value={{ user, token, isAuthenticated: !!user, isLoading, login, logout, refreshUser }}
+      value={{ user, token, isLoading, login, logout, registerClient, registerProvider }}
     >
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth(): AuthContextValue {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth deve ser usado dentro de <AuthProvider>');
-  return ctx;
 }

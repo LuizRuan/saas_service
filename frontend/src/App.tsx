@@ -1,20 +1,74 @@
-import { RouterProvider } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
-import { router } from './router';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { AuthProvider } from '@/contexts/AuthContext';
 
-export default function App() {
+import { PublicLayout } from '@/components/layout/PublicLayout';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { ProtectedRoute } from '@/components/layout/ProtectedRoute';
+import { RoleRedirect } from '@/components/shared/RoleRedirect';
+
+import { LandingPage } from '@/pages/public/LandingPage';
+import { LoginPage } from '@/pages/auth/LoginPage';
+import { RegisterPage } from '@/pages/auth/RegisterPage';
+import { ClientDashboardPage } from '@/pages/client/DashboardPage';
+import { ExplorePage } from '@/pages/client/ExplorePage';
+import { MyRequestsPage } from '@/pages/client/MyRequestsPage';
+import { NewRequestPage } from '@/pages/client/NewRequestPage';
+import { RequestDetailPage } from '@/pages/client/RequestDetailPage';
+import { MyOrdersPage } from '@/pages/client/MyOrdersPage';
+import { ProviderDashboardPage } from '@/pages/provider/DashboardPage';
+import { AvailableRequestsPage } from '@/pages/provider/AvailableRequestsPage';
+import { ProviderRequestDetailPage } from '@/pages/provider/ProviderRequestDetailPage';
+import { MyQuotesPage } from '@/pages/provider/MyQuotesPage';
+import { AdminDashboardPage } from '@/pages/admin/DashboardPage';
+
+export function App() {
   return (
-    <>
-      <RouterProvider router={router} />
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          duration: 4000,
-          style: { borderRadius: '10px', fontSize: '14px' },
-          success: { style: { background: '#f0fdf4', color: '#15803d', border: '1px solid #dcfce7' } },
-          error: { style: { background: '#fef2f2', color: '#dc2626', border: '1px solid #fee2e2' } },
-        }}
-      />
-    </>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Rotas públicas */}
+          <Route element={<PublicLayout />}>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/cadastro" element={<RegisterPage />} />
+          </Route>
+
+          {/* Cliente */}
+          <Route element={<ProtectedRoute roles={['client']} />}>
+            <Route element={<DashboardLayout />}>
+              <Route path="/cliente" element={<ClientDashboardPage />} />
+              <Route path="/cliente/explorar" element={<ExplorePage />} />
+              <Route path="/cliente/solicitacoes" element={<MyRequestsPage />} />
+              <Route path="/cliente/solicitacoes/nova" element={<NewRequestPage />} />
+              <Route path="/cliente/solicitacoes/:id" element={<RequestDetailPage />} />
+              <Route path="/cliente/ordens" element={<MyOrdersPage />} />
+            </Route>
+          </Route>
+
+          {/* Prestador */}
+          <Route element={<ProtectedRoute roles={['provider']} />}>
+            <Route element={<DashboardLayout />}>
+              <Route path="/prestador" element={<ProviderDashboardPage />} />
+              <Route path="/prestador/pedidos" element={<AvailableRequestsPage />} />
+              <Route path="/prestador/pedidos/:id" element={<ProviderRequestDetailPage />} />
+              <Route path="/prestador/orcamentos" element={<MyQuotesPage />} />
+            </Route>
+          </Route>
+
+          {/* Admin */}
+          <Route element={<ProtectedRoute roles={['admin']} />}>
+            <Route element={<DashboardLayout />}>
+              <Route path="/admin" element={<AdminDashboardPage />} />
+            </Route>
+          </Route>
+
+          {/* Redirecionar usuários logados para seu dashboard */}
+          <Route path="/dashboard" element={<RoleRedirect />} />
+
+          {/* Qualquer outra rota */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }

@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema, Types } from 'mongoose';
+import mongoose, { Schema, Document, Types } from 'mongoose';
 import { QuoteStatus } from '../types';
 
 export interface IQuote extends Document {
@@ -9,30 +9,87 @@ export interface IQuote extends Document {
   depositAmount: number;
   remainingAmount: number;
   description: string;
-  estimatedTime?: string;
-  warrantyDays?: number;
+  estimatedTime: string;
+  warrantyDays: number;
   status: QuoteStatus;
   createdAt: Date;
   updatedAt: Date;
 }
 
-const QuoteSchema = new Schema<IQuote>(
+const quoteSchema = new Schema<IQuote>(
   {
-    serviceRequestId: { type: Schema.Types.ObjectId, ref: 'ServiceRequest', required: true },
-    providerId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    totalAmount: { type: Number, required: true, min: 0 },
-    depositPercentage: { type: Number, default: 20 },
-    depositAmount: { type: Number, required: true, min: 0 },
-    remainingAmount: { type: Number, required: true, min: 0 },
-    description: { type: String, required: true },
-    estimatedTime: { type: String },
-    warrantyDays: { type: Number, min: 0 },
-    status: { type: String, enum: ['sent', 'accepted', 'rejected', 'expired'], default: 'sent' },
+    serviceRequestId: {
+      type: Schema.Types.ObjectId,
+      ref: 'ServiceRequest',
+      required: true,
+    },
+    providerId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    totalAmount: {
+      type: Number,
+      required: [true, 'Valor total é obrigatório'],
+      min: [1, 'Valor deve ser positivo'],
+    },
+    depositPercentage: {
+      type: Number,
+      default: 20,
+      immutable: true,
+    },
+    depositAmount: {
+      type: Number,
+      required: true,
+    },
+    remainingAmount: {
+      type: Number,
+      required: true,
+    },
+    description: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    estimatedTime: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    warrantyDays: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    status: {
+      type: String,
+      enum: ['sent', 'accepted', 'rejected', 'expired'],
+      default: 'sent',
+    },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+    toJSON: {
+      transform(_doc, ret: any) {
+        delete ret.__v;
+        return ret;
+      },
+    },
+  }
 );
 
-QuoteSchema.index({ serviceRequestId: 1 });
-QuoteSchema.index({ providerId: 1, status: 1 });
+quoteSchema.index({ serviceRequestId: 1 });
+quoteSchema.index({ providerId: 1 });
+quoteSchema.index({ status: 1 });
 
-export const Quote = mongoose.model<IQuote>('Quote', QuoteSchema);
+// Sempre calcula sinal como 20%
+quoteSchema.pre('validate', function (next) {
+  if (this.totalAmount) {
+    this.depositPercentage = 20;
+    this.depositAmount = Math.round(this.totalAmount * 0.2 * 100) / 100;
+    this.remainingAmount = Math.round((this.totalAmount - this.depositAmount) * 100) / 100;
+  }
+  next();
+});
+
+export const Quote = mongoose.model<IQuote>('Quote', quoteSchema);

@@ -1,4 +1,4 @@
-import { clsx } from 'clsx';
+import { cn } from '@/lib/utils';
 
 interface SpinnerProps {
   size?: 'sm' | 'md' | 'lg';
@@ -6,19 +6,23 @@ interface SpinnerProps {
 }
 
 const sizes = {
-  sm: 'w-4 h-4 border-2',
-  md: 'w-6 h-6 border-2',
-  lg: 'w-10 h-10 border-4',
+  sm: 'h-4 w-4 border-2',
+  md: 'h-6 w-6 border-2',
+  lg: 'h-10 w-10 border-[3px]',
 };
 
-export default function Spinner({ size = 'md', className }: SpinnerProps) {
+export function Spinner({ size = 'md', className }: SpinnerProps) {
   return (
-    <div
-      className={clsx(
-        'rounded-full border-primary-200 border-t-primary-800 animate-spin',
-        sizes[size],
-        className
-      )}
-    />
+    <div className="flex items-center justify-center">
+      <div
+        className={cn(
+          'animate-spin rounded-full border-primary/30 border-t-primary',
+          sizes[size],
+          className
+        )}
+        role="status"
+        aria-label="Carregando"
+      />
+    </div>
   );
 }

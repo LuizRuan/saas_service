@@ -1,24 +1,19 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-const required = ['MONGODB_URI', 'JWT_SECRET'] as const;
-for (const key of required) {
-  if (!process.env[key]) {
-    throw new Error(`Variável de ambiente obrigatória não definida: ${key}`);
-  }
-}
-
 export const env = {
-  nodeEnv: process.env.NODE_ENV ?? 'development',
-  port: parseInt(process.env.PORT ?? '3001', 10),
-  mongodbUri: process.env.MONGODB_URI!,
-  jwtSecret: process.env.JWT_SECRET!,
-  jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? '7d',
-  adminEmail: process.env.ADMIN_EMAIL ?? 'admin@maocerta.com.br',
-  adminPassword: process.env.ADMIN_PASSWORD ?? 'Admin@123456',
-  adminName: process.env.ADMIN_NAME ?? 'Administrador MãoCerta',
-  platformCommissionPercent: parseFloat(process.env.PLATFORM_COMMISSION_PERCENT ?? '10'),
-  corsOrigin: process.env.CORS_ORIGIN ?? 'http://localhost:5173',
-  isDevelopment: process.env.NODE_ENV !== 'production',
-  isProduction: process.env.NODE_ENV === 'production',
+  PORT: parseInt(process.env.PORT || '3333', 10),
+  NODE_ENV: process.env.NODE_ENV || 'development',
+  MONGODB_URI: process.env.MONGODB_URI || '',
+  USE_MEMORY_DB: process.env.USE_MEMORY_DB === 'true',
+  JWT_SECRET: process.env.JWT_SECRET || 'dev_secret_change_in_production',
+  JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
+  ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'admin@maocerta.com',
+  ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || '123456',
+  ADMIN_NAME: process.env.ADMIN_NAME || 'Administrador MãoCerta',
+  UPLOAD_PROVIDER: process.env.UPLOAD_PROVIDER || 'local',
+  UPLOAD_MAX_SIZE_MB: parseInt(process.env.UPLOAD_MAX_SIZE_MB || '10', 10),
+  PLATFORM_FEE_PERCENT: parseFloat(process.env.PLATFORM_FEE_PERCENT || '10'),
+  DEPOSIT_PERCENT: parseFloat(process.env.DEPOSIT_PERCENT || '20'),
+  FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:5173',
 };

@@ -1,56 +1,61 @@
-import { ButtonHTMLAttributes, ReactNode } from 'react';
-import { clsx } from 'clsx';
-import Spinner from './Spinner';
-
-type Variant = 'primary' | 'secondary' | 'success' | 'danger' | 'ghost' | 'outline';
-type Size = 'sm' | 'md' | 'lg';
+import { type ButtonHTMLAttributes, type ReactNode } from 'react';
+import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
+import { Spinner } from './Spinner';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: Variant;
-  size?: Size;
+  variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'success';
+  size?: 'sm' | 'md' | 'lg';
   loading?: boolean;
-  icon?: ReactNode;
-  fullWidth?: boolean;
+  children: ReactNode;
 }
 
-const base =
-  'inline-flex items-center justify-center gap-2 font-medium rounded-lg transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
-
-const variants: Record<Variant, string> = {
-  primary: 'bg-primary-800 text-white hover:bg-primary-900 focus-visible:ring-primary-800',
-  secondary: 'bg-surface-100 text-surface-800 hover:bg-surface-200 focus-visible:ring-surface-300',
-  success: 'bg-trust-600 text-white hover:bg-trust-700 focus-visible:ring-trust-600',
-  danger: 'bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-600',
-  ghost: 'text-surface-700 hover:bg-surface-100 focus-visible:ring-surface-300',
-  outline:
-    'border border-primary-800 text-primary-800 hover:bg-primary-50 focus-visible:ring-primary-800',
+const variants = {
+  primary:
+    'bg-primary text-white hover:bg-primary-dark active:bg-primary-dark shadow-sm hover:shadow-md',
+  secondary:
+    'bg-white text-primary border border-slate-200 hover:border-primary/30 hover:bg-primary-50 active:bg-primary-100 shadow-sm',
+  danger:
+    'bg-danger text-white hover:bg-red-600 active:bg-red-700 shadow-sm hover:shadow-md',
+  ghost:
+    'text-slate-600 hover:bg-slate-100 active:bg-slate-200',
+  success:
+    'bg-success text-white hover:bg-success-dark active:bg-success-dark shadow-sm hover:shadow-md',
 };
 
-const sizes: Record<Size, string> = {
-  sm: 'text-sm px-3 py-1.5',
-  md: 'text-sm px-4 py-2',
-  lg: 'text-base px-6 py-3',
+const sizes = {
+  sm: 'px-3.5 py-1.5 text-sm',
+  md: 'px-5 py-2.5 text-sm',
+  lg: 'px-7 py-3.5 text-base',
 };
 
-export default function Button({
+export function Button({
   variant = 'primary',
   size = 'md',
   loading = false,
-  icon,
-  fullWidth = false,
-  children,
   disabled,
   className,
+  children,
   ...props
 }: ButtonProps) {
   return (
-    <button
-      className={clsx(base, variants[variant], sizes[size], fullWidth && 'w-full', className)}
+    <motion.button
+      whileHover={!disabled && !loading ? { scale: 1.02 } : undefined}
+      whileTap={!disabled && !loading ? { scale: 0.98 } : undefined}
+      transition={{ type: 'spring', stiffness: 400, damping: 17 }}
       disabled={disabled || loading}
-      {...props}
+      className={cn(
+        'inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-all duration-200',
+        'focus:outline-none focus:ring-2 focus:ring-primary/30 focus:ring-offset-2',
+        'disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none',
+        variants[variant],
+        sizes[size],
+        className
+      )}
+      {...(props as any)}
     >
-      {loading ? <Spinner size="sm" className="border-white border-t-white/40" /> : icon}
+      {loading && <Spinner size="sm" />}
       {children}
-    </button>
+    </motion.button>
   );
 }

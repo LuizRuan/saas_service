@@ -1,165 +1,407 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import {
-  Search, Shield, Star, Zap, ArrowRight, CheckCircle,
-  Paintbrush, Zap as ZapIcon, Droplets, Wind, Camera, Package,
+  PaintBucket,
+  Zap,
+  Droplets,
+  Wind,
+  Camera,
+  Sofa,
+  Wrench,
+  ShieldCheck,
+  Star,
+  BadgeCheck,
+  ChevronRight,
+  Search,
+  ClipboardList,
+  HandCoins,
+  Hammer,
+  MessageSquare,
+  Clock,
+  CheckCircle2,
+  ArrowRight,
+  FileCheck,
+  Eye,
 } from 'lucide-react';
-import Button from '../../components/ui/Button';
-import Card from '../../components/ui/Card';
-import { categoryService } from '../../services/categoryService';
-import type { Category } from '../../types/category';
+import { categoryService } from '@/services/category.service';
+import { Button } from '@/components/ui/Button';
+import { AnimatedSection, StaggerContainer, StaggerItem } from '@/components/ui/AnimatedSection';
+import type { Category } from '@/types';
 
-const categoryIcons: Record<string, React.ReactNode> = {
-  pintor: <Paintbrush className="w-6 h-6" />,
-  eletricista: <ZapIcon className="w-6 h-6" />,
-  encanador: <Droplets className="w-6 h-6" />,
-  'tecnico-ar-condicionado': <Wind className="w-6 h-6" />,
-  'tecnico-cameras-seguranca': <Camera className="w-6 h-6" />,
-  'montador-moveis': <Package className="w-6 h-6" />,
+const CATEGORY_ICONS: Record<string, React.ElementType> = {
+  pintor: PaintBucket,
+  eletricista: Zap,
+  encanador: Droplets,
+  'tecnico-ar-condicionado': Wind,
+  'tecnico-cameras-seguranca': Camera,
+  'montador-de-moveis': Sofa,
 };
 
-const steps = [
-  { num: '1', title: 'Solicite o serviço', desc: 'Descreva o que precisa e envie fotos. É gratuito.' },
-  { num: '2', title: 'Receba orçamentos', desc: 'Prestadores aprovados enviam propostas com preço e prazo.' },
-  { num: '3', title: 'Escolha e pague', desc: 'Aceite o melhor orçamento e pague um sinal de apenas 20%.' },
-  { num: '4', title: 'Avalie o serviço', desc: 'Após a conclusão, avalie e pague o restante com segurança.' },
+function getCategoryIcon(slug: string) {
+  return CATEGORY_ICONS[slug] ?? Wrench;
+}
+
+const CLIENT_STEPS = [
+  { icon: Search, title: 'Publique o serviço', desc: 'Descreva o que precisa, a cidade e a urgência. É rápido e gratuito.' },
+  { icon: ClipboardList, title: 'Receba orçamentos', desc: 'Prestadores verificados da sua região enviam propostas detalhadas.' },
+  { icon: HandCoins, title: 'Escolha o melhor prestador', desc: 'Compare valores, prazo e garantia. Contrate com segurança.' },
 ];
 
-const benefits = [
-  { icon: <Shield className="w-5 h-5 text-trust-600" />, title: 'Prestadores verificados', desc: 'Todos passam por análise antes de entrar na plataforma.' },
-  { icon: <Star className="w-5 h-5 text-yellow-500" />, title: 'Avaliações reais', desc: 'Veja opiniões de clientes reais antes de contratar.' },
-  { icon: <Zap className="w-5 h-5 text-primary-800" />, title: 'Rápido e seguro', desc: 'Orçamentos em minutos. Pagamento protegido.' },
+const PROVIDER_STEPS = [
+  { icon: Hammer, title: 'Encontre pedidos disponíveis', desc: 'Veja solicitações na sua área e especialidade.' },
+  { icon: MessageSquare, title: 'Envie seu orçamento', desc: 'Proponha seus valores, prazo e garantia ao cliente.' },
+  { icon: Clock, title: 'Organize suas ordens de serviço', desc: 'Gerencie serviços aceitos e acompanhe tudo na plataforma.' },
 ];
 
-export default function LandingPage() {
-  const navigate = useNavigate();
+const BENEFITS = [
+  {
+    icon: ShieldCheck,
+    title: 'Prestadores verificados',
+    desc: 'Todos os profissionais passam por aprovação antes de enviar orçamentos na plataforma.',
+    color: 'from-blue-500 to-primary',
+  },
+  {
+    icon: Eye,
+    title: 'Orçamentos transparentes',
+    desc: 'Compare valores, prazo e garantia lado a lado antes de tomar sua decisão.',
+    color: 'from-violet-500 to-purple-600',
+  },
+  {
+    icon: FileCheck,
+    title: 'Acompanhamento do serviço',
+    desc: 'Acompanhe cada etapa — da solicitação à conclusão — em tempo real.',
+    color: 'from-amber-500 to-orange-500',
+  },
+  {
+    icon: Star,
+    title: 'Avaliações verificadas',
+    desc: 'Apenas clientes que contrataram podem avaliar. Confiança de verdade.',
+    color: 'from-emerald-500 to-green-600',
+  },
+];
+
+// Floating cards for the hero visual
+const FLOATING_CARDS = [
+  { label: 'Solicitação criada', icon: CheckCircle2, color: 'text-blue-500', delay: 0 },
+  { label: 'Orçamento recebido', icon: FileCheck, color: 'text-emerald-500', delay: 0.2 },
+  { label: 'Prestador verificado', icon: BadgeCheck, color: 'text-violet-500', delay: 0.4 },
+  { label: 'Pagamento seguro', icon: ShieldCheck, color: 'text-amber-500', delay: 0.6 },
+];
+
+export function LandingPage() {
   const [categories, setCategories] = useState<Category[]>([]);
-  const [search, setSearch] = useState('');
 
   useEffect(() => {
-    categoryService.list().then(setCategories).catch(() => {});
+    categoryService.getAll().then(setCategories).catch(() => {});
   }, []);
 
-  function handleSearch(e: React.FormEvent) {
-    e.preventDefault();
-    navigate(`/buscar?q=${encodeURIComponent(search)}`);
-  }
-
   return (
-    <div>
-      {/* Hero */}
-      <section className="bg-gradient-to-br from-primary-900 via-primary-800 to-primary-700 text-white py-20 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-4xl sm:text-5xl font-bold leading-tight mb-4">
-            Encontre o prestador certo,{' '}
-            <span className="text-trust-500">na hora certa</span>
-          </h1>
-          <p className="text-lg text-white/80 mb-10 max-w-2xl mx-auto">
-            Pintores, eletricistas, encanadores e muito mais. Profissionais verificados perto de você, com orçamentos rápidos e pagamento seguro.
-          </p>
-          <form onSubmit={handleSearch} className="flex gap-2 max-w-xl mx-auto">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-300" />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="O que você precisa? Ex: pintor, eletricista..."
-                className="w-full pl-10 pr-4 py-3 rounded-xl text-surface-800 text-sm outline-none focus:ring-2 focus:ring-white/40"
-              />
-            </div>
-            <Button type="submit" size="lg" variant="success">
-              Buscar
-            </Button>
-          </form>
+    <div className="overflow-hidden">
+      {/* ── Hero ── */}
+      <section className="relative bg-gradient-hero min-h-[calc(100vh-4rem)] flex items-center">
+        {/* Background decorations */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-96 h-96 bg-success/5 rounded-full blur-3xl animate-pulse-soft" />
+          <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-primary-light/10 rounded-full blur-3xl animate-pulse-soft" style={{ animationDelay: '1.5s' }} />
+          <div className="absolute top-1/4 right-1/4 w-64 h-64 bg-white/[0.02] rounded-full blur-2xl" />
+          {/* Grid pattern */}
+          <div className="absolute inset-0 opacity-[0.03]" style={{
+            backgroundImage: 'linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px)',
+            backgroundSize: '60px 60px'
+          }} />
         </div>
-      </section>
 
-      {/* Categories */}
-      <section className="py-16 px-4 bg-white">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-2xl font-bold text-surface-800 text-center mb-2">Categorias de serviço</h2>
-          <p className="text-surface-600 text-center text-sm mb-8">Clique para ver prestadores disponíveis na sua cidade</p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            {categories.map((cat) => (
-              <Card
-                key={cat._id}
-                hover
-                padding="md"
-                className="text-center cursor-pointer"
-                onClick={() => navigate(`/categoria/${cat.slug}`)}
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20 sm:py-28 w-full">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            {/* Left: Text */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            >
+              {/* Trust badge */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2, duration: 0.5 }}
+                className="mb-6 inline-flex items-center gap-2 rounded-full bg-white/[0.08] border border-white/10 px-4 py-2 text-sm font-medium text-white/80 backdrop-blur-sm"
               >
-                <div className="w-12 h-12 rounded-xl bg-primary-50 flex items-center justify-center mx-auto mb-2 text-primary-800">
-                  {categoryIcons[cat.slug] ?? <Search className="w-6 h-6" />}
-                </div>
-                <p className="text-xs font-medium text-surface-800 leading-tight">{cat.name}</p>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
+                <BadgeCheck className="h-4 w-4 text-success" />
+                Prestadores verificados • Orçamentos rápidos • Pagamento seguro
+              </motion.div>
 
-      {/* How it works */}
-      <section className="py-16 px-4 bg-surface-50">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl font-bold text-surface-800 text-center mb-2">Como funciona</h2>
-          <p className="text-surface-600 text-center text-sm mb-10">Do pedido à conclusão, tudo em um só lugar</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {steps.map((step) => (
-              <div key={step.num} className="text-center">
-                <div className="w-12 h-12 rounded-full bg-primary-800 text-white font-bold text-lg flex items-center justify-center mx-auto mb-3">
-                  {step.num}
-                </div>
-                <h3 className="font-semibold text-surface-800 mb-1">{step.title}</h3>
-                <p className="text-sm text-surface-600">{step.desc}</p>
+              <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-extrabold leading-[1.1] tracking-tight text-white mb-6">
+                Contrate serviços locais com mais segurança e praticidade{' '}
+                <span className="text-success">na sua cidade</span>
+              </h1>
+
+              <p className="text-lg sm:text-xl text-white/60 mb-10 max-w-xl leading-relaxed">
+                Publique o serviço que você precisa, receba orçamentos de prestadores verificados e acompanhe
+                tudo em uma plataforma simples, segura e profissional.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link to="/cadastro">
+                  <Button
+                    size="lg"
+                    className="bg-success hover:bg-success-dark text-white border-0 shadow-glow w-full sm:w-auto text-base"
+                  >
+                    Publicar um serviço
+                    <ArrowRight className="h-5 w-5" />
+                  </Button>
+                </Link>
+                <Link to="/cadastro">
+                  <Button
+                    size="lg"
+                    variant="ghost"
+                    className="border border-white/20 text-white hover:bg-white/10 w-full sm:w-auto text-base"
+                  >
+                    Sou prestador
+                    <ChevronRight className="h-5 w-5" />
+                  </Button>
+                </Link>
               </div>
-            ))}
+            </motion.div>
+
+            {/* Right: Floating cards */}
+            <div className="hidden lg:block relative">
+              <div className="relative w-full h-[420px]">
+                {FLOATING_CARDS.map((card, i) => (
+                  <motion.div
+                    key={card.label}
+                    initial={{ opacity: 0, y: 40, scale: 0.9 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ delay: 0.5 + card.delay, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                    className={`absolute ${
+                      i === 0 ? 'top-0 left-4' :
+                      i === 1 ? 'top-8 right-0' :
+                      i === 2 ? 'bottom-24 left-0' :
+                      'bottom-0 right-8'
+                    }`}
+                  >
+                    <motion.div
+                      animate={{ y: [0, -8, 0] }}
+                      transition={{ duration: 4 + i, repeat: Infinity, ease: 'easeInOut', delay: i * 0.5 }}
+                      className="flex items-center gap-3 rounded-2xl bg-white/[0.08] border border-white/10 backdrop-blur-md px-5 py-4 shadow-premium"
+                    >
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10">
+                        <card.icon className={`h-5 w-5 ${card.color}`} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-white">{card.label}</p>
+                        <p className="text-xs text-white/50">Agora mesmo</p>
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                ))}
+                {/* Central glow */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-success/10 rounded-full blur-3xl" />
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Benefits */}
-      <section className="py-16 px-4 bg-white">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl font-bold text-surface-800 text-center mb-10">Por que escolher a MãoCerta?</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {benefits.map((b) => (
-              <Card key={b.title} padding="md">
-                <div className="flex gap-3">
-                  <div className="mt-0.5">{b.icon}</div>
-                  <div>
-                    <h3 className="font-semibold text-surface-800 mb-1">{b.title}</h3>
-                    <p className="text-sm text-surface-600">{b.desc}</p>
+      {/* ── Como funciona ── */}
+      <section id="como-funciona" className="py-24 bg-white relative">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <AnimatedSection className="text-center mb-16">
+            <span className="inline-block text-sm font-semibold text-primary bg-primary-50 px-4 py-1.5 rounded-full mb-4">
+              Simples e seguro
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-3">Como funciona</h2>
+            <p className="text-slate-500 max-w-xl mx-auto">Dois caminhos, um objetivo: conectar quem precisa a quem faz.</p>
+          </AnimatedSection>
+
+          <div className="grid lg:grid-cols-2 gap-16">
+            {/* Para clientes */}
+            <AnimatedSection delay={0.1}>
+              <div className="inline-flex items-center gap-2 rounded-full bg-primary-50 px-4 py-2 text-sm font-semibold text-primary mb-8">
+                <Search className="h-4 w-4" />
+                Para clientes
+              </div>
+              <div className="space-y-8">
+                {CLIENT_STEPS.map((step, i) => (
+                  <motion.div
+                    key={step.title}
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.2 + i * 0.15, duration: 0.5 }}
+                    className="flex gap-5 group"
+                  >
+                    <div className="relative">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-white text-sm font-bold shadow-md group-hover:shadow-lg transition-shadow">
+                        {i + 1}
+                      </div>
+                      {i < CLIENT_STEPS.length - 1 && (
+                        <div className="absolute top-14 left-1/2 -translate-x-1/2 w-px h-8 bg-slate-200" />
+                      )}
+                    </div>
+                    <div className="pt-1">
+                      <h3 className="font-semibold text-slate-800 mb-1 text-base">{step.title}</h3>
+                      <p className="text-sm text-slate-500 leading-relaxed">{step.desc}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </AnimatedSection>
+
+            {/* Para prestadores */}
+            <AnimatedSection delay={0.2}>
+              <div className="inline-flex items-center gap-2 rounded-full bg-success-50 px-4 py-2 text-sm font-semibold text-success-dark mb-8">
+                <Hammer className="h-4 w-4" />
+                Para prestadores
+              </div>
+              <div className="space-y-8">
+                {PROVIDER_STEPS.map((step, i) => (
+                  <motion.div
+                    key={step.title}
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.3 + i * 0.15, duration: 0.5 }}
+                    className="flex gap-5 group"
+                  >
+                    <div className="relative">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-success text-white text-sm font-bold shadow-md group-hover:shadow-lg transition-shadow">
+                        {i + 1}
+                      </div>
+                      {i < PROVIDER_STEPS.length - 1 && (
+                        <div className="absolute top-14 left-1/2 -translate-x-1/2 w-px h-8 bg-slate-200" />
+                      )}
+                    </div>
+                    <div className="pt-1">
+                      <h3 className="font-semibold text-slate-800 mb-1 text-base">{step.title}</h3>
+                      <p className="text-sm text-slate-500 leading-relaxed">{step.desc}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </AnimatedSection>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Categorias ── */}
+      {categories.length > 0 && (
+        <section id="categorias" className="py-24 bg-slate-50 relative">
+          <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <AnimatedSection className="text-center mb-14">
+              <span className="inline-block text-sm font-semibold text-primary bg-primary-50 px-4 py-1.5 rounded-full mb-4">
+                Especialidades
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-3">Categorias de serviço</h2>
+              <p className="text-slate-500">Encontre profissionais especializados no que você precisa.</p>
+            </AnimatedSection>
+
+            <StaggerContainer className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4" staggerDelay={0.08}>
+              {categories.map((cat) => {
+                const Icon = getCategoryIcon(cat.slug);
+                return (
+                  <StaggerItem key={cat._id}>
+                    <motion.div
+                      whileHover={{ y: -4, scale: 1.02 }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                      className="flex flex-col items-center gap-4 rounded-2xl border border-slate-100 bg-white p-6 shadow-card hover:shadow-card-hover cursor-pointer group transition-colors"
+                    >
+                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-50 group-hover:bg-primary/10 transition-colors">
+                        <Icon className="h-7 w-7 text-primary" />
+                      </div>
+                      <span className="text-sm font-semibold text-slate-700 text-center">{cat.name}</span>
+                    </motion.div>
+                  </StaggerItem>
+                );
+              })}
+            </StaggerContainer>
+          </div>
+        </section>
+      )}
+
+      {/* ── Benefícios ── */}
+      <section id="beneficios" className="py-24 bg-white relative">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <AnimatedSection className="text-center mb-16">
+            <span className="inline-block text-sm font-semibold text-primary bg-primary-50 px-4 py-1.5 rounded-full mb-4">
+              Vantagens
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-3">Por que usar a MãoCerta?</h2>
+            <p className="text-slate-500 max-w-xl mx-auto">Segurança e confiança do início ao fim do serviço.</p>
+          </AnimatedSection>
+
+          <StaggerContainer className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6" staggerDelay={0.1}>
+            {BENEFITS.map((b) => (
+              <StaggerItem key={b.title}>
+                <motion.div
+                  whileHover={{ y: -6 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                  className="flex flex-col items-center text-center rounded-2xl border border-slate-100 bg-white p-8 shadow-card hover:shadow-card-hover transition-shadow h-full"
+                >
+                  <div className={`mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${b.color} shadow-md`}>
+                    <b.icon className="h-7 w-7 text-white" />
                   </div>
-                </div>
-              </Card>
+                  <h3 className="text-base font-bold text-slate-800 mb-2">{b.title}</h3>
+                  <p className="text-sm text-slate-500 leading-relaxed">{b.desc}</p>
+                </motion.div>
+              </StaggerItem>
             ))}
-          </div>
+          </StaggerContainer>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-16 px-4 bg-primary-900 text-white text-center">
-        <div className="max-w-2xl mx-auto">
-          <h2 className="text-3xl font-bold mb-3">Pronto para começar?</h2>
-          <p className="text-white/80 mb-8">
-            Cadastre-se gratuitamente e encontre o prestador ideal para o seu serviço hoje mesmo.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button size="lg" variant="success" onClick={() => navigate('/cadastro/cliente')} icon={<ArrowRight className="w-4 h-4" />}>
-              Quero contratar
-            </Button>
-            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10" onClick={() => navigate('/cadastro/prestador')}>
-              Quero trabalhar
-            </Button>
+      {/* ── Segurança ── */}
+      <AnimatedSection>
+        <section className="py-20 bg-gradient-hero text-white relative overflow-hidden">
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute -top-20 -right-20 w-72 h-72 bg-success/10 rounded-full blur-3xl" />
+            <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-white/5 rounded-full blur-3xl" />
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-4 mt-8 text-sm text-white/60">
-            {['Gratuito para clientes', 'Sem taxa de adesão', 'Cancele quando quiser'].map((t) => (
-              <div key={t} className="flex items-center gap-1.5">
-                <CheckCircle className="w-4 h-4 text-trust-500" />
-                {t}
+          <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col sm:flex-row items-center gap-8 sm:gap-12">
+              <motion.div
+                whileHover={{ rotate: 5, scale: 1.05 }}
+                className="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl bg-white/10 border border-white/10 backdrop-blur-sm"
+              >
+                <ShieldCheck className="h-10 w-10 text-success" />
+              </motion.div>
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-bold mb-3">Seu dinheiro protegido até o fim</h2>
+                <p className="text-white/60 max-w-2xl text-lg leading-relaxed">
+                  O pagamento fica retido na plataforma. O prestador recebe apenas após você confirmar que o
+                  serviço foi concluído com qualidade. Se houver problema, nossa equipe resolve.
+                </p>
               </div>
-            ))}
+            </div>
           </div>
+        </section>
+      </AnimatedSection>
+
+      {/* ── CTA final ── */}
+      <section className="py-24 bg-gradient-to-br from-success-dark via-success to-success-light relative overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 -right-40 w-96 h-96 bg-white/10 rounded-full blur-3xl" />
+          <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-white/5 rounded-full blur-3xl" />
+        </div>
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
+          <AnimatedSection>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white mb-5 tracking-tight">
+              Pronto para começar?
+            </h2>
+            <p className="text-white/80 text-lg mb-10 max-w-xl mx-auto leading-relaxed">
+              Cadastre-se gratuitamente e encontre o profissional certo para o seu projeto.
+            </p>
+            <Link to="/cadastro">
+              <Button
+                size="lg"
+                className="bg-white text-success-dark hover:bg-slate-50 font-bold border-0 shadow-premium text-base px-10"
+              >
+                Criar conta grátis
+                <ArrowRight className="h-5 w-5" />
+              </Button>
+            </Link>
+          </AnimatedSection>
         </div>
       </section>
     </div>
