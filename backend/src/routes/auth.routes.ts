@@ -12,6 +12,9 @@ router.post('/register/client', authRateLimiter, validate(registerClientSchema),
 router.post('/register/provider', authRateLimiter, validate(registerProviderSchema), authController.registerProvider);
 router.post('/login', authRateLimiter, validate(loginSchema), authController.login);
 
+// Rotas públicas extras
+router.post('/forgot-password', authController.forgotPassword);
+
 // Rotas protegidas
 router.get('/me', authenticate, authController.getMe);
 router.put('/me', authenticate, authController.updateMe);

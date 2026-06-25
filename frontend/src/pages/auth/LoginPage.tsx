@@ -143,12 +143,17 @@ export function LoginPage() {
             </button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-white/30">
-            Não tem conta?{' '}
-            <Link to="/cadastro" className="font-semibold text-emerald-400 hover:text-emerald-300 transition-colors">
-              Cadastre-se gratuitamente
+          <div className="mt-6 flex flex-col items-center gap-2">
+            <Link to="/esqueci-senha" className="text-sm text-white/30 hover:text-white/60 transition-colors">
+              Esqueceu sua senha?
             </Link>
-          </p>
+            <p className="text-sm text-white/30">
+              Não tem conta?{' '}
+              <Link to="/cadastro" className="font-semibold text-emerald-400 hover:text-emerald-300 transition-colors">
+                Cadastre-se gratuitamente
+              </Link>
+            </p>
+          </div>
         </div>
 
       </motion.div>

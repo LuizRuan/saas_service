@@ -95,6 +95,14 @@ class AuthController {
   }
 
   /**
+   * POST /api/auth/forgot-password
+   */
+  async forgotPassword(_req: Request, res: Response): Promise<void> {
+    // Responde sempre com sucesso para não expor se o e-mail existe no banco
+    sendSuccess(res, null, 'Se este e-mail estiver cadastrado, você receberá as instruções em breve.');
+  }
+
+  /**
    * PUT /api/auth/me
    */
   async updateMe(req: AuthenticatedRequest, res: Response): Promise<void> {

@@ -9,6 +9,7 @@ import { RoleRedirect } from '@/components/shared/RoleRedirect';
 import { LandingPage } from '@/pages/public/LandingPage';
 import { LoginPage } from '@/pages/auth/LoginPage';
 import { RegisterPage } from '@/pages/auth/RegisterPage';
+import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage';
 import { ClientDashboardPage } from '@/pages/client/DashboardPage';
 import { ExplorePage } from '@/pages/client/ExplorePage';
 import { MyRequestsPage } from '@/pages/client/MyRequestsPage';
@@ -31,6 +32,7 @@ export function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/cadastro" element={<RegisterPage />} />
+            <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
           </Route>
 
           {/* Cliente */}
