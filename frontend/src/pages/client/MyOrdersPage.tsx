@@ -7,13 +7,8 @@ import {
 } from 'lucide-react';
 import { orderService } from '@/services/order.service';
 import { formatDate, formatCurrency } from '@/lib/utils';
+import { fadeUp } from '@/lib/animations';
 import type { Order, OrderStatus } from '@/types';
-
-const fadeUp = (i = 0) => ({
-  initial: { opacity: 0, y: 18 },
-  animate: { opacity: 1, y: 0 },
-  transition: { delay: i * 0.06, duration: 0.4, ease: 'easeOut' as const },
-});
 
 const STATUS_CONFIG: Record<OrderStatus, { label: string; icon: React.ElementType; cls: string }> = {
   created:          { label: 'Aguardando início',    icon: Clock,         cls: 'text-amber-400   bg-amber-500/10   border-amber-500/20'   },
@@ -119,12 +114,13 @@ export function MyOrdersPage() {
       {!loading && !error && orders.length > 0 && (
         <div className="space-y-3">
           {orders.map((order, i) => {
-            const cfg = STATUS_CONFIG[order.status] ?? STATUS_CONFIG.pending;
+            const cfg = STATUS_CONFIG[order.status] ?? STATUS_CONFIG.created;
             const Icon = cfg.icon;
-            const catName = (order.serviceRequestId as any)?.categoryId?.name ?? '—';
-            const city = order.serviceRequestId?.city ?? '—';
-            const description = order.serviceRequestId?.description ?? '';
-            const providerName = order.providerId?.name ?? '—';
+            const sr = typeof order.serviceRequestId === 'object' ? order.serviceRequestId : null;
+            const catName = (sr as any)?.categoryId?.name ?? '—';
+            const city = sr?.city ?? '—';
+            const description = sr?.description ?? '';
+            const providerName = typeof order.providerId === 'object' ? order.providerId?.name ?? '—' : '—';
 
             return (
               <motion.div key={order._id} {...fadeUp(i)}>
@@ -161,7 +157,7 @@ export function MyOrdersPage() {
                       {formatDate(order.createdAt)}
                     </div>
                     <div className="ml-auto">
-                      <span className="text-sm font-bold text-white">{formatCurrency(order.totalAmount)}</span>
+                      <span className="text-sm font-bold text-white">{formatCurrency(order.totalAmount ?? 0)}</span>
                       <span className="text-xs text-white/30 ml-1">total</span>
                     </div>
                   </div>

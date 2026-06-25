@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Users, Search, AlertCircle, ShieldCheck, UserX, User, HardHat } from 'lucide-react';
+import { Users, Search, AlertCircle, ShieldCheck, User, HardHat } from 'lucide-react';
 import api from '@/lib/axios';
 import { fadeUp } from '@/lib/animations';
 
@@ -108,7 +108,7 @@ export function AdminUsersPage() {
                 className="flex items-center gap-4 rounded-2xl border border-white/5 p-4 hover:border-white/10 transition-all"
                 style={{ background: 'rgba(255,255,255,0.02)' }}>
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500/20 to-violet-500/20 border border-white/5">
-                  <RoleIcon className="h-4.5 w-4.5 h-5 w-5 text-white/50" />
+                  <RoleIcon className="h-5 w-5 text-white/50" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-white truncate">{user.name}</p>

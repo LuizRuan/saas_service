@@ -3,8 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, MapPin, Calendar, Clock, AlertCircle,
-  FileText, CheckCircle2, XCircle, DollarSign, Timer, ShieldCheck,
-  Star, ClipboardList,
+  FileText, CheckCircle2, XCircle, Timer, ShieldCheck,
+  ClipboardList,
 } from 'lucide-react';
 import { serviceRequestService } from '@/services/serviceRequest.service';
 import { quoteService } from '@/services/quote.service';

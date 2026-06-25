@@ -44,7 +44,7 @@ class DisputeService {
     if (!dispute) throw new NotFoundError('Disputa');
 
     if (role !== 'admin') {
-      const order = await Order.findById(dispute.orderId);
+      const order = dispute.orderId as any; // já populado com clientId e providerId
       if (!order) throw new NotFoundError('Ordem de serviço');
       const isInvolved =
         order.clientId.toString() === userId || order.providerId.toString() === userId;

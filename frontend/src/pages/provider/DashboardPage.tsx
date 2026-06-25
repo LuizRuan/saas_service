@@ -7,12 +7,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import api from '@/lib/axios';
-
-const fadeUp = (delay = 0) => ({
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
-  transition: { delay, duration: 0.5, ease: 'easeOut' as const },
-});
+import { fadeUp } from '@/lib/animations';
 
 interface ProviderStats {
   availableRequests: number;
@@ -51,20 +46,26 @@ export function ProviderDashboardPage() {
   const firstName = user?.name?.split(' ')[0] ?? 'profissional';
 
   useEffect(() => {
-    // Busca stats básicos do perfil do prestador
-    api.get('/providers/search').then(res => {
-      const providers = res.data.data?.providers ?? [];
-      const myProfile = providers.find((p: any) => p.userId?._id === user?._id);
+    const controller = new AbortController();
+    Promise.all([
+      api.get('/providers/me', { signal: controller.signal }),
+      api.get('/quotes', { signal: controller.signal }),
+    ]).then(([profileRes, quotesRes]) => {
+      const profile = profileRes.data.data;
+      const quotes: any[] = quotesRes.data.data ?? [];
       setStats({
         availableRequests: 0,
-        pendingQuotes: 0,
-        acceptedQuotes: 0,
-        profileStatus: myProfile?.status ?? 'pending',
+        pendingQuotes: quotes.filter(q => q.status === 'sent').length,
+        acceptedQuotes: quotes.filter(q => q.status === 'accepted').length,
+        profileStatus: profile?.status ?? 'pending',
       });
     }).catch(() => {
-      setStats({ availableRequests: 0, pendingQuotes: 0, acceptedQuotes: 0, profileStatus: 'pending' });
+      if (!controller.signal.aborted) {
+        setStats({ availableRequests: 0, pendingQuotes: 0, acceptedQuotes: 0, profileStatus: 'pending' });
+      }
     });
-  }, [user]);
+    return () => controller.abort();
+  }, []);
 
   const isPending = stats?.profileStatus === 'pending' || !stats;
   const isApproved = stats?.profileStatus === 'approved';
@@ -125,9 +126,9 @@ export function ProviderDashboardPage() {
       {/* ── Mini KPIs ──────────────────────────── */}
       <motion.div {...fadeUp(0.1)} className="grid grid-cols-3 gap-3 mb-8">
         {[
-          { icon: TrendingUp, label: 'Pedidos disponíveis', value: '—',     color: 'text-blue-400'    },
-          { icon: FileText,   label: 'Orçamentos enviados',  value: '—',     color: 'text-violet-400'  },
-          { icon: Users,      label: 'Clientes atendidos',   value: '—',     color: 'text-emerald-400' },
+          { icon: TrendingUp, label: 'Pedidos disponíveis', value: '—',                                                          color: 'text-blue-400'    },
+          { icon: FileText,   label: 'Orçamentos enviados',  value: stats ? String(stats.pendingQuotes + stats.acceptedQuotes) : '—', color: 'text-violet-400'  },
+          { icon: Users,      label: 'Orçamentos aceitos',   value: stats ? String(stats.acceptedQuotes) : '—',                   color: 'text-emerald-400' },
         ].map((s) => (
           <div key={s.label}
             className="flex flex-col items-center text-center rounded-2xl border border-white/8 py-4 px-3"

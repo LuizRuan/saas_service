@@ -19,7 +19,8 @@ class ProviderService {
 
     // Filtro por cidade (case-insensitive)
     if (city && city.trim()) {
-      filter['cities'] = { $regex: city.trim(), $options: 'i' };
+      const escaped = city.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      filter['cities'] = { $regex: escaped, $options: 'i' };
     }
 
     // Filtro por categoria (via _id ou slug)
@@ -45,21 +46,22 @@ class ProviderService {
       ProviderProfile.countDocuments(filter),
     ]);
 
-    // Busca média de avaliações para cada prestador
-    const profilesWithRating = await Promise.all(
-      profiles.map(async (profile) => {
-        const reviews = await Review.aggregate([
-          { $match: { providerId: profile.userId } },
-          { $group: { _id: null, avg: { $avg: '$rating' }, count: { $sum: 1 } } },
-        ]);
-        const ratingData = reviews[0] ?? { avg: 0, count: 0 };
-        return {
-          ...profile.toObject(),
-          averageRating: Math.round(ratingData.avg * 10) / 10,
-          reviewCount: ratingData.count,
-        };
-      })
-    );
+    // Busca média de avaliações em uma única aggregation (evita N+1)
+    const providerIds = profiles.map(p => p.userId);
+    const ratingsRaw = await Review.aggregate([
+      { $match: { providerId: { $in: providerIds } } },
+      { $group: { _id: '$providerId', avg: { $avg: '$rating' }, count: { $sum: 1 } } },
+    ]);
+    const ratingsMap = new Map(ratingsRaw.map(r => [r._id.toString(), r]));
+
+    const profilesWithRating = profiles.map(profile => {
+      const r = ratingsMap.get((profile.userId as any)?.toString() ?? '');
+      return {
+        ...profile.toObject(),
+        averageRating: r ? Math.round(r.avg * 10) / 10 : 0,
+        reviewCount: r?.count ?? 0,
+      };
+    });
 
     return {
       providers: profilesWithRating,
