@@ -54,8 +54,14 @@ class ServiceRequestService {
       const isSelected = request.selectedProviderId?.toString() === requesterId;
       if (!isSelected) {
         const profile = await ProviderProfile.findOne({ userId: requesterId });
-        const inCategories = profile?.categories.some(c => c.toString() === request.categoryId.toString());
-        const inCities = profile?.cities.includes(request.city);
+        // Após .populate(), categoryId vira um objeto — precisamos pegar o _id explicitamente
+        const rawCat: any = request.categoryId;
+        const catId = rawCat?._id ? rawCat._id.toString() : rawCat?.toString?.() ?? '';
+        const inCategories = profile?.categories.some(c => c.toString() === catId);
+        // Comparação case-insensitive de cidades
+        const inCities = profile?.cities.some(
+          c => c.toLowerCase().trim() === request.city.toLowerCase().trim()
+        );
         if (!inCategories || !inCities) throw new ForbiddenError();
       }
     } else if (requesterRole === 'client') {
@@ -64,6 +70,7 @@ class ServiceRequestService {
 
     return sanitizeServiceRequest(request, requesterId, requesterRole);
   }
+
 
   async cancel(requestId: string, requesterId: string, requesterRole: UserRole) {
     const request = await ServiceRequest.findById(requestId);

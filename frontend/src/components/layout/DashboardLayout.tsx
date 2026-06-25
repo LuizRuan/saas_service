@@ -67,6 +67,11 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
     admin: 'Administrador',
   };
 
+  // Link do logo aponta para o dashboard do papel correto
+  const homePath =
+    user?.role === 'client' ? '/cliente' :
+    user?.role === 'provider' ? '/prestador' : '/admin';
+
   return (
     <div className="relative flex h-full flex-col overflow-hidden" style={{ background: 'linear-gradient(180deg, #0a0f1e 0%, #0d1530 50%, #0a1428 100%)' }}>
       {/* Background orbs */}
@@ -76,7 +81,7 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
 
       {/* Logo */}
       <div className="relative z-10 flex items-center justify-between px-5 py-5 border-b border-white/5">
-        <Link to="/" className="flex items-center gap-3 group" onClick={onClose}>
+        <Link to={homePath} className="flex items-center gap-3 group" onClick={onClose}>
           <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 shadow-lg glow-green group-hover:scale-105 transition-transform">
             <Wrench className="h-4 w-4 text-white" />
           </div>

@@ -1,24 +1,27 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, FileText } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  ArrowLeft, MapPin, Calendar, Clock, AlertCircle,
+  FileText, CheckCircle2, XCircle, DollarSign, Timer, ShieldCheck,
+  Star, ClipboardList,
+} from 'lucide-react';
 import { serviceRequestService } from '@/services/serviceRequest.service';
 import { quoteService } from '@/services/quote.service';
 import type { Category, Order, Quote, ServiceRequest } from '@/types';
-import { PageHeader } from '@/components/shared/PageHeader';
-import { StatusBadge } from '@/components/shared/StatusBadge';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { Modal } from '@/components/ui/Modal';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { Spinner } from '@/components/ui/Spinner';
-import { Alert } from '@/components/ui/Alert';
 import { formatCurrency, formatDate } from '@/lib/utils';
 
-const URGENCY_LABELS: Record<string, string> = {
-  low: 'Baixa',
-  medium: 'Média',
-  high: 'Alta',
+const URGENCY: Record<string, { label: string; cls: string }> = {
+  low:    { label: 'Baixa',  cls: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
+  medium: { label: 'Média',  cls: 'text-amber-400   bg-amber-500/10   border-amber-500/20'  },
+  high:   { label: 'Alta',   cls: 'text-red-400     bg-red-500/10     border-red-500/20'    },
 };
+
+const fadeUp = (i = 0) => ({
+  initial: { opacity: 0, y: 16 },
+  animate: { opacity: 1, y: 0 },
+  transition: { delay: i * 0.07, duration: 0.4, ease: 'easeOut' as const },
+});
 
 export function RequestDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -28,7 +31,6 @@ export function RequestDetailPage() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
   const [cancelling, setCancelling] = useState(false);
   const [actionError, setActionError] = useState('');
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
@@ -37,14 +39,8 @@ export function RequestDetailPage() {
 
   useEffect(() => {
     if (!id) return;
-    Promise.all([
-      serviceRequestService.getById(id),
-      quoteService.getByRequest(id),
-    ])
-      .then(([req, qs]) => {
-        setRequest(req);
-        setQuotes(qs);
-      })
+    Promise.all([serviceRequestService.getById(id), quoteService.getByRequest(id)])
+      .then(([req, qs]) => { setRequest(req); setQuotes(qs); })
       .catch(() => setError('Não foi possível carregar os dados.'))
       .finally(() => setLoading(false));
   }, [id]);
@@ -89,7 +85,7 @@ export function RequestDetailPage() {
     setRejectingId(quoteId);
     try {
       const updated = await quoteService.reject(quoteId);
-      setQuotes((prev) => prev.map((q) => (q._id === quoteId ? updated : q)));
+      setQuotes(prev => prev.map(q => (q._id === quoteId ? updated : q)));
     } catch {
       setActionError('Não foi possível recusar o orçamento.');
     } finally {
@@ -101,173 +97,218 @@ export function RequestDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-16">
-        <Spinner size="lg" />
+      <div className="max-w-2xl mx-auto space-y-4">
+        {[1, 2].map(i => (
+          <div key={i} className="rounded-2xl border border-white/5 p-6 animate-pulse" style={{ background: 'rgba(255,255,255,0.02)' }}>
+            <div className="h-4 bg-white/8 rounded-lg w-1/3 mb-3" />
+            <div className="h-3 bg-white/5 rounded-lg w-2/3 mb-2" />
+            <div className="h-3 bg-white/5 rounded-lg w-full" />
+          </div>
+        ))}
       </div>
     );
   }
 
   if (error || !request) {
     return (
-      <div>
-        <Button variant="secondary" onClick={() => navigate(-1)} className="mb-4">
-          <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
-        </Button>
-        <Alert type="error" message={error || 'Solicitação não encontrada.'} />
+      <div className="max-w-2xl mx-auto">
+        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-sm text-white/40 hover:text-white/80 mb-5 transition-colors">
+          <ArrowLeft className="h-4 w-4" /> Voltar
+        </button>
+        <div className="flex items-start gap-3 rounded-2xl border border-red-500/20 bg-red-500/10 p-4">
+          <AlertCircle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
+          <p className="text-sm text-red-300">{error || 'Solicitação não encontrada.'}</p>
+        </div>
       </div>
     );
   }
 
+  const urgencyCfg = URGENCY[request.urgency] ?? URGENCY.medium;
+
   return (
-    <div className="max-w-2xl">
-      <div className="flex items-center gap-3 mb-6">
-        <Button variant="secondary" onClick={() => navigate('/cliente/solicitacoes')}>
-          <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
-        </Button>
-        <PageHeader title="Detalhes da Solicitação" />
-      </div>
+    <div className="relative max-w-2xl mx-auto">
+      <div className="orb w-64 h-64 bg-blue-600 -top-20 -right-20 opacity-10 pointer-events-none" />
 
-      {actionError && <Alert type="error" message={actionError} className="mb-4" />}
+      <motion.button {...fadeUp(0)} onClick={() => navigate('/cliente/solicitacoes')}
+        className="flex items-center gap-2 text-sm text-white/40 hover:text-white/80 mb-6 transition-colors group">
+        <ArrowLeft className="h-4 w-4 group-hover:-translate-x-0.5 transition-transform" />
+        Voltar às solicitações
+      </motion.button>
 
-      <Card className="mb-6">
+      {actionError && (
+        <motion.div {...fadeUp(0)} className="flex items-center gap-2 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 mb-4">
+          <AlertCircle className="h-4 w-4 text-red-400 shrink-0" />
+          <p className="text-sm text-red-300">{actionError}</p>
+        </motion.div>
+      )}
+
+      {/* Request card */}
+      <motion.div {...fadeUp(0.05)} className="rounded-2xl border border-white/8 p-6 mb-5" style={{ background: 'rgba(255,255,255,0.03)' }}>
         <div className="flex items-start justify-between gap-3 mb-4">
           <div>
-            <p className="font-semibold text-lg text-slate-800">{getCategoryName(request.categoryId)}</p>
-            <p className="text-sm text-slate-500">
+            <p className="font-bold text-xl text-white">{getCategoryName(request.categoryId)}</p>
+            <div className="flex items-center gap-1.5 text-sm text-white/40 mt-1">
+              <MapPin className="h-3.5 w-3.5" />
               {request.city}{request.neighborhood ? ` — ${request.neighborhood}` : ''}
-            </p>
+            </div>
           </div>
-          <StatusBadge status={request.status} />
+          <span className={`flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full border shrink-0 ${urgencyCfg.cls}`}>
+            <Clock className="h-3 w-3" /> {urgencyCfg.label} urgência
+          </span>
         </div>
 
-        <div className="space-y-2 text-sm">
+        <div className="grid grid-cols-2 gap-3 mb-4">
           {request.approximateAddress && (
-            <p><span className="text-slate-500">Endereço aprox.:</span> {request.approximateAddress}</p>
+            <div className="rounded-xl border border-white/5 bg-white/[0.02] p-3">
+              <p className="text-[10px] text-white/30 mb-1 uppercase tracking-wider">Endereço aprox.</p>
+              <p className="text-sm text-white/65">{request.approximateAddress}</p>
+            </div>
           )}
-          {request.fullAddress && (
-            <p><span className="text-slate-500">Endereço completo:</span> {request.fullAddress}</p>
-          )}
-          <p><span className="text-slate-500">Urgência:</span> {URGENCY_LABELS[request.urgency] ?? request.urgency}</p>
           {request.desiredDate && (
-            <p><span className="text-slate-500">Data desejada:</span> {formatDate(request.desiredDate)}</p>
+            <div className="rounded-xl border border-white/5 bg-white/[0.02] p-3">
+              <p className="text-[10px] text-white/30 mb-1 uppercase tracking-wider">Data desejada</p>
+              <p className="text-sm text-white/65 flex items-center gap-1.5"><Calendar className="h-3 w-3" />{formatDate(request.desiredDate)}</p>
+            </div>
           )}
-          <p><span className="text-slate-500">Criada em:</span> {formatDate(request.createdAt)}</p>
+          <div className="rounded-xl border border-white/5 bg-white/[0.02] p-3">
+            <p className="text-[10px] text-white/30 mb-1 uppercase tracking-wider">Criada em</p>
+            <p className="text-sm text-white/65">{formatDate(request.createdAt)}</p>
+          </div>
         </div>
 
-        <div className="mt-4 pt-4 border-t border-slate-100">
-          <p className="text-sm text-slate-500 mb-1">Descrição</p>
-          <p className="text-sm text-slate-700 whitespace-pre-wrap">{request.description}</p>
+        <div className="border-t border-white/5 pt-4">
+          <p className="text-[10px] text-white/30 mb-2 uppercase tracking-wider">Descrição</p>
+          <p className="text-sm text-white/65 leading-relaxed whitespace-pre-wrap">{request.description}</p>
         </div>
 
         {canCancel && (
-          <div className="mt-4 pt-4 border-t border-slate-100">
-            <Button
-              variant="secondary"
-              onClick={handleCancel}
-              loading={cancelling}
-              className="text-danger border-danger hover:bg-danger/5"
-            >
+          <div className="border-t border-white/5 pt-4 mt-4">
+            <button onClick={handleCancel} disabled={cancelling}
+              className="flex items-center gap-2 text-sm font-semibold text-red-400 hover:text-red-300
+                border border-red-500/20 bg-red-500/10 hover:bg-red-500/15 px-4 py-2 rounded-xl transition-all disabled:opacity-50">
+              {cancelling ? <span className="h-4 w-4 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin" /> : <XCircle className="h-4 w-4" />}
               Cancelar solicitação
-            </Button>
+            </button>
           </div>
         )}
-      </Card>
+      </motion.div>
 
-      <div>
-        <h2 className="font-semibold text-slate-800 mb-3">
-          Orçamentos recebidos ({quotes.length})
-        </h2>
+      {/* Quotes */}
+      <motion.div {...fadeUp(0.12)}>
+        <div className="flex items-center gap-2 mb-3">
+          <FileText className="h-4 w-4 text-white/40" />
+          <h2 className="font-semibold text-white/70">Orçamentos recebidos ({quotes.length})</h2>
+        </div>
 
-        {quotes.length === 0 && (
-          <EmptyState
-            icon={FileText}
-            title="Nenhum orçamento ainda"
-            description="Aguarde enquanto prestadores enviam seus orçamentos para você."
-          />
+        {quotes.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center rounded-2xl border border-white/5"
+            style={{ background: 'rgba(255,255,255,0.02)' }}>
+            <FileText className="h-8 w-8 text-white/15 mb-3" />
+            <p className="text-sm font-medium text-white/40">Nenhum orçamento ainda</p>
+            <p className="text-xs text-white/25 mt-1">Aguarde enquanto prestadores enviam suas propostas.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {quotes.map((quote, i) => {
+              const isAccepting = acceptingId === quote._id;
+              const isRejecting = rejectingId === quote._id;
+              const canAct = quote.status === 'sent' && request.status !== 'cancelled' && request.status !== 'completed';
+              return (
+                <motion.div key={quote._id} {...fadeUp(0.14 + i * 0.05)}
+                  className="rounded-2xl border border-white/8 p-5"
+                  style={{ background: 'rgba(255,255,255,0.03)' }}>
+                  <div className="flex items-start justify-between gap-3 mb-4">
+                    <div>
+                      <p className="font-semibold text-white">{getProviderName(quote.providerId)}</p>
+                      <div className="flex gap-3 mt-1">
+                        {quote.estimatedTime && (
+                          <span className="flex items-center gap-1 text-xs text-white/35"><Timer className="h-3 w-3" />{quote.estimatedTime}</span>
+                        )}
+                        {quote.warrantyDays > 0 && (
+                          <span className="flex items-center gap-1 text-xs text-white/35"><ShieldCheck className="h-3 w-3" />{quote.warrantyDays}d garantia</span>
+                        )}
+                      </div>
+                    </div>
+                    <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border shrink-0 ${
+                      quote.status === 'accepted' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' :
+                      quote.status === 'rejected' ? 'text-red-400 bg-red-500/10 border-red-500/20' :
+                      'text-blue-400 bg-blue-500/10 border-blue-500/20'
+                    }`}>
+                      {quote.status === 'accepted' ? 'Aceito' : quote.status === 'rejected' ? 'Recusado' : 'Enviado'}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3 mb-4">
+                    {[
+                      { label: 'Total', value: formatCurrency(quote.totalAmount), highlight: true },
+                      { label: 'Sinal (20%)', value: formatCurrency(quote.depositAmount), highlight: false },
+                      { label: 'Restante', value: formatCurrency(quote.remainingAmount), highlight: false },
+                    ].map(item => (
+                      <div key={item.label} className="rounded-xl border border-white/5 bg-white/[0.03] p-3 text-center">
+                        <p className="text-[10px] text-white/30 mb-1">{item.label}</p>
+                        <p className={`font-bold text-sm ${item.highlight ? 'text-white' : 'text-white/55'}`}>{item.value}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {quote.description && (
+                    <p className="text-sm text-white/45 mb-4 leading-relaxed">{quote.description}</p>
+                  )}
+
+                  {canAct && (
+                    <div className="flex gap-3">
+                      <button onClick={() => handleAccept(quote._id)} disabled={!!acceptingId}
+                        className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500
+                          py-2.5 text-sm font-bold text-white transition-all disabled:opacity-50">
+                        {isAccepting ? <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                        Aceitar orçamento
+                      </button>
+                      <button onClick={() => handleReject(quote._id)} disabled={!!rejectingId}
+                        className="flex items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10
+                          hover:bg-red-500/15 px-4 py-2.5 text-sm font-semibold text-red-400 transition-all disabled:opacity-50">
+                        {isRejecting ? <span className="h-4 w-4 border-2 border-red-400/30 border-t-red-400 rounded-full animate-spin" /> : <XCircle className="h-4 w-4" />}
+                        Recusar
+                      </button>
+                    </div>
+                  )}
+                </motion.div>
+              );
+            })}
+          </div>
         )}
+      </motion.div>
 
-        <div className="space-y-3">
-          {quotes.map((quote) => {
-            const isAccepting = acceptingId === quote._id;
-            const isRejecting = rejectingId === quote._id;
-            const canAct =
-              quote.status === 'sent' &&
-              request.status !== 'cancelled' &&
-              request.status !== 'completed';
-
-            return (
-              <Card key={quote._id}>
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div>
-                    <p className="font-medium text-slate-800">{getProviderName(quote.providerId)}</p>
-                    {quote.estimatedTime && (
-                      <p className="text-xs text-slate-500">Prazo: {quote.estimatedTime}</p>
-                    )}
-                    {quote.warrantyDays > 0 && (
-                      <p className="text-xs text-slate-500">Garantia: {quote.warrantyDays} dias</p>
-                    )}
-                  </div>
-                  <StatusBadge status={quote.status} />
-                </div>
-
-                <div className="grid grid-cols-3 gap-3 text-sm mb-3">
-                  <div className="rounded-lg bg-slate-50 p-3 text-center">
-                    <p className="text-xs text-slate-500">Total</p>
-                    <p className="font-bold text-slate-800">{formatCurrency(quote.totalAmount)}</p>
-                  </div>
-                  <div className="rounded-lg bg-slate-50 p-3 text-center">
-                    <p className="text-xs text-slate-500">Sinal (20%)</p>
-                    <p className="font-semibold text-slate-700">{formatCurrency(quote.depositAmount)}</p>
-                  </div>
-                  <div className="rounded-lg bg-slate-50 p-3 text-center">
-                    <p className="text-xs text-slate-500">Restante (80%)</p>
-                    <p className="font-semibold text-slate-700">{formatCurrency(quote.remainingAmount)}</p>
-                  </div>
-                </div>
-
-                {quote.description && (
-                  <p className="text-sm text-slate-600 mb-3">{quote.description}</p>
-                )}
-
-                {canAct && (
-                  <div className="flex gap-2">
-                    <Button onClick={() => handleAccept(quote._id)} loading={isAccepting} className="flex-1">
-                      Aceitar orçamento
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      onClick={() => handleReject(quote._id)}
-                      loading={isRejecting}
-                      className="text-danger border-danger hover:bg-danger/5"
-                    >
-                      Recusar
-                    </Button>
-                  </div>
-                )}
-              </Card>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Success modal after accepting quote */}
-      <Modal
-        isOpen={!!successOrder}
-        onClose={() => setSuccessOrder(null)}
-        title="Orçamento aceito!"
-      >
-        <p className="text-sm text-slate-600 mb-4">
-          Seu orçamento foi aceito com sucesso. Uma ordem de serviço foi criada automaticamente.
-        </p>
-        <div className="flex gap-3">
-          <Button onClick={() => navigate('/cliente/ordens')} className="flex-1">
-            Ver minhas ordens
-          </Button>
-          <Button variant="secondary" onClick={() => setSuccessOrder(null)}>
-            Fechar
-          </Button>
-        </div>
-      </Modal>
+      {/* Success modal */}
+      <AnimatePresence>
+        {successOrder && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+              className="w-full max-w-sm rounded-3xl border border-emerald-500/20 p-8 text-center"
+              style={{ background: 'rgba(10,15,30,0.95)', backdropFilter: 'blur(20px)' }}
+            >
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/15 border border-emerald-500/20 mx-auto mb-4">
+                <CheckCircle2 className="h-8 w-8 text-emerald-400" />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Orçamento aceito!</h3>
+              <p className="text-sm text-white/50 mb-6">Uma ordem de serviço foi criada. O prestador será notificado.</p>
+              <div className="flex gap-3">
+                <button onClick={() => navigate('/cliente/ordens')}
+                  className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 py-2.5 text-sm font-bold text-white transition-all">
+                  <ClipboardList className="h-4 w-4" /> Ver minhas ordens
+                </button>
+                <button onClick={() => setSuccessOrder(null)}
+                  className="rounded-xl border border-white/10 px-4 py-2.5 text-sm text-white/40 hover:text-white/70 transition-all">
+                  Fechar
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

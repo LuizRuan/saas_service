@@ -1,24 +1,22 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { motion } from 'framer-motion';
+import {
+  ArrowLeft, MapPin, Calendar, Clock, AlertCircle,
+  Send, CheckCircle2, DollarSign, ShieldCheck, Timer,
+} from 'lucide-react';
 import { serviceRequestService } from '@/services/serviceRequest.service';
 import { quoteService } from '@/services/quote.service';
 import type { Category, CreateQuoteData, Quote, ServiceRequest } from '@/types';
-import { PageHeader } from '@/components/shared/PageHeader';
-import { StatusBadge } from '@/components/shared/StatusBadge';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { Input } from '@/components/ui/Input';
-import { Textarea } from '@/components/ui/Textarea';
-import { Alert } from '@/components/ui/Alert';
-import { Spinner } from '@/components/ui/Spinner';
 import { formatCurrency, formatDate } from '@/lib/utils';
 
-const URGENCY_LABELS: Record<string, string> = {
-  low: 'Baixa',
-  medium: 'Média',
-  high: 'Alta',
-};
+const URGENCY: Record<string, string> = { low: 'Baixa', medium: 'Média', high: 'Alta' };
+
+const fadeUp = (i = 0) => ({
+  initial: { opacity: 0, y: 16 },
+  animate: { opacity: 1, y: 0 },
+  transition: { delay: i * 0.08, duration: 0.4, ease: 'easeOut' as const },
+});
 
 export function ProviderRequestDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -38,16 +36,11 @@ export function ProviderRequestDetailPage() {
 
   useEffect(() => {
     if (!id) return;
-    Promise.all([
-      serviceRequestService.getById(id),
-      quoteService.getMy(),
-    ])
+    Promise.all([serviceRequestService.getById(id), quoteService.getMy()])
       .then(([req, myQuotes]) => {
         setRequest(req);
         const found = myQuotes.find((q) => {
-          const reqId = typeof q.serviceRequestId === 'object'
-            ? q.serviceRequestId._id
-            : q.serviceRequestId;
+          const reqId = typeof q.serviceRequestId === 'object' ? q.serviceRequestId._id : q.serviceRequestId;
           return reqId === id;
         });
         if (found) setExistingQuote(found);
@@ -63,10 +56,7 @@ export function ProviderRequestDetailPage() {
     e.preventDefault();
     setFormError('');
     const amount = parseFloat(totalAmount);
-    if (!totalAmount || isNaN(amount) || amount <= 0) {
-      setFormError('Informe um valor total válido.');
-      return;
-    }
+    if (!totalAmount || isNaN(amount) || amount <= 0) { setFormError('Informe um valor total válido.'); return; }
     if (!id) return;
     setSubmitting(true);
     try {
@@ -88,149 +78,210 @@ export function ProviderRequestDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-16">
-        <Spinner size="lg" />
+      <div className="max-w-2xl mx-auto space-y-4">
+        {[1, 2].map(i => (
+          <div key={i} className="rounded-2xl border border-white/5 p-6 animate-pulse" style={{ background: 'rgba(255,255,255,0.02)' }}>
+            <div className="h-4 bg-white/8 rounded-lg w-1/3 mb-3" />
+            <div className="h-3 bg-white/5 rounded-lg w-2/3 mb-2" />
+            <div className="h-3 bg-white/5 rounded-lg w-full" />
+          </div>
+        ))}
       </div>
     );
   }
 
   if (error || !request) {
     return (
-      <div>
-        <Button variant="secondary" onClick={() => navigate(-1)} className="mb-4">
-          <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
-        </Button>
-        <Alert type="error" message={error || 'Pedido não encontrado.'} />
+      <div className="max-w-2xl mx-auto">
+        <button onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-sm text-white/40 hover:text-white/80 mb-5 transition-colors">
+          <ArrowLeft className="h-4 w-4" /> Voltar
+        </button>
+        <div className="flex items-start gap-3 rounded-2xl border border-red-500/20 bg-red-500/10 p-4">
+          <AlertCircle className="h-5 w-5 text-red-400 shrink-0 mt-0.5" />
+          <p className="text-sm text-red-300">{error || 'Pedido não encontrado.'}</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-2xl">
-      <div className="flex items-center gap-3 mb-6">
-        <Button variant="secondary" onClick={() => navigate('/prestador/pedidos')}>
-          <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
-        </Button>
-        <PageHeader title="Detalhes do Pedido" />
-      </div>
+    <div className="relative max-w-2xl mx-auto">
+      <div className="orb w-64 h-64 bg-indigo-600 -top-20 -right-20 opacity-10 pointer-events-none" />
 
-      <Card className="mb-6">
+      {/* Back */}
+      <motion.button {...fadeUp(0)} onClick={() => navigate('/prestador/pedidos')}
+        className="flex items-center gap-2 text-sm text-white/40 hover:text-white/80 mb-6 transition-colors group">
+        <ArrowLeft className="h-4 w-4 group-hover:-translate-x-0.5 transition-transform" />
+        Voltar aos pedidos
+      </motion.button>
+
+      {/* Request card */}
+      <motion.div {...fadeUp(0.05)}
+        className="rounded-2xl border border-white/8 p-6 mb-5"
+        style={{ background: 'rgba(255,255,255,0.03)' }}>
         <div className="flex items-start justify-between gap-3 mb-4">
           <div>
-            <p className="font-semibold text-lg text-slate-800">{getCategoryName(request.categoryId)}</p>
-            <p className="text-sm text-slate-500">
+            <p className="font-bold text-xl text-white">{getCategoryName(request.categoryId)}</p>
+            <div className="flex items-center gap-1.5 text-sm text-white/40 mt-1">
+              <MapPin className="h-3.5 w-3.5" />
               {request.city}{request.neighborhood ? ` — ${request.neighborhood}` : ''}
-            </p>
+            </div>
           </div>
-          <StatusBadge status={request.status} />
+          <span className="flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full border
+            text-blue-400 bg-blue-500/10 border-blue-500/20 shrink-0">
+            <Clock className="h-3 w-3" /> Aberta
+          </span>
         </div>
 
-        <div className="space-y-2 text-sm">
+        <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
           {request.approximateAddress && (
-            <p><span className="text-slate-500">Endereço aprox.:</span> {request.approximateAddress}</p>
+            <div className="rounded-xl border border-white/5 bg-white/[0.02] p-3">
+              <p className="text-xs text-white/30 mb-1">Endereço aprox.</p>
+              <p className="text-white/70 text-sm">{request.approximateAddress}</p>
+            </div>
           )}
-          <p><span className="text-slate-500">Urgência:</span> {URGENCY_LABELS[request.urgency] ?? request.urgency}</p>
+          <div className="rounded-xl border border-white/5 bg-white/[0.02] p-3">
+            <p className="text-xs text-white/30 mb-1">Urgência</p>
+            <p className="text-white/70">{URGENCY[request.urgency] ?? request.urgency}</p>
+          </div>
           {request.desiredDate && (
-            <p><span className="text-slate-500">Data desejada:</span> {formatDate(request.desiredDate)}</p>
+            <div className="rounded-xl border border-white/5 bg-white/[0.02] p-3">
+              <p className="text-xs text-white/30 mb-1">Data desejada</p>
+              <p className="text-white/70">{formatDate(request.desiredDate)}</p>
+            </div>
           )}
-          <p><span className="text-slate-500">Criado em:</span> {formatDate(request.createdAt)}</p>
+          <div className="rounded-xl border border-white/5 bg-white/[0.02] p-3">
+            <p className="text-xs text-white/30 mb-1">Criado em</p>
+            <p className="text-white/70">{formatDate(request.createdAt)}</p>
+          </div>
         </div>
 
-        <div className="mt-4 pt-4 border-t border-slate-100">
-          <p className="text-sm text-slate-500 mb-1">Descrição do cliente</p>
-          <p className="text-sm text-slate-700 whitespace-pre-wrap">{request.description}</p>
+        <div className="border-t border-white/5 pt-4">
+          <p className="text-xs text-white/30 mb-2 uppercase tracking-wider">Descrição do cliente</p>
+          <p className="text-sm text-white/65 leading-relaxed whitespace-pre-wrap">{request.description}</p>
         </div>
-      </Card>
+      </motion.div>
 
+      {/* Quote section */}
       {existingQuote ? (
-        <Card>
-          <h2 className="font-semibold text-slate-800 mb-3">Seu orçamento enviado</h2>
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm text-slate-500">Status</p>
-            <StatusBadge status={existingQuote.status} />
+        <motion.div {...fadeUp(0.1)}
+          className="rounded-2xl border border-emerald-500/20 p-6"
+          style={{ background: 'rgba(16,185,129,0.05)' }}>
+          <div className="flex items-center gap-2 mb-4">
+            <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+            <h2 className="font-bold text-white">Seu orçamento enviado</h2>
           </div>
-          <div className="grid grid-cols-3 gap-3 text-sm mb-3">
-            <div className="rounded-lg bg-slate-50 p-3 text-center">
-              <p className="text-xs text-slate-500">Total</p>
-              <p className="font-bold text-slate-800">{formatCurrency(existingQuote.totalAmount)}</p>
-            </div>
-            <div className="rounded-lg bg-slate-50 p-3 text-center">
-              <p className="text-xs text-slate-500">Sinal (20%)</p>
-              <p className="font-semibold text-slate-700">{formatCurrency(existingQuote.depositAmount)}</p>
-            </div>
-            <div className="rounded-lg bg-slate-50 p-3 text-center">
-              <p className="text-xs text-slate-500">Restante (80%)</p>
-              <p className="font-semibold text-slate-700">{formatCurrency(existingQuote.remainingAmount)}</p>
-            </div>
+          <div className="grid grid-cols-3 gap-3 mb-4">
+            {[
+              { label: 'Total', value: formatCurrency(existingQuote.totalAmount), highlight: true },
+              { label: 'Sinal (20%)', value: formatCurrency(existingQuote.depositAmount), highlight: false },
+              { label: 'Restante (80%)', value: formatCurrency(existingQuote.remainingAmount), highlight: false },
+            ].map(item => (
+              <div key={item.label} className="rounded-xl border border-white/5 bg-white/[0.03] p-3 text-center">
+                <p className="text-[10px] text-white/30 mb-1">{item.label}</p>
+                <p className={`font-bold text-sm ${item.highlight ? 'text-white' : 'text-white/60'}`}>{item.value}</p>
+              </div>
+            ))}
           </div>
-          {existingQuote.estimatedTime && (
-            <p className="text-sm text-slate-600">Prazo: {existingQuote.estimatedTime}</p>
-          )}
-          {existingQuote.warrantyDays > 0 && (
-            <p className="text-sm text-slate-600">Garantia: {existingQuote.warrantyDays} dias</p>
-          )}
-          {existingQuote.description && (
-            <p className="text-sm text-slate-600 mt-2">{existingQuote.description}</p>
-          )}
-        </Card>
+          {existingQuote.estimatedTime && <p className="text-sm text-white/40">Prazo: {existingQuote.estimatedTime}</p>}
+          {existingQuote.warrantyDays > 0 && <p className="text-sm text-white/40 mt-1">Garantia: {existingQuote.warrantyDays} dias</p>}
+        </motion.div>
       ) : (
-        <Card>
-          <h2 className="font-semibold text-slate-800 mb-4">Enviar orçamento</h2>
-          {formError && <Alert type="error" message={formError} className="mb-4" />}
+        <motion.div {...fadeUp(0.1)}
+          className="rounded-2xl border border-white/8 p-6"
+          style={{ background: 'rgba(255,255,255,0.03)' }}>
+          <div className="flex items-center gap-2 mb-5">
+            <Send className="h-5 w-5 text-blue-400" />
+            <h2 className="font-bold text-white">Enviar orçamento</h2>
+          </div>
+
+          {formError && (
+            <div className="flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 mb-4">
+              <AlertCircle className="h-4 w-4 text-red-400 shrink-0" />
+              <p className="text-sm text-red-300">{formError}</p>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              label="Valor total (R$) *"
-              type="number"
-              min="0"
-              step="0.01"
-              value={totalAmount}
-              onChange={(e) => setTotalAmount(e.target.value)}
-              placeholder="Ex: 500.00"
-            />
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Input
-                label="Prazo estimado"
-                value={estimatedTime}
-                onChange={(e) => setEstimatedTime(e.target.value)}
-                placeholder="Ex: 3 dias úteis"
-              />
-              <Input
-                label="Garantia (dias)"
-                type="number"
-                min="0"
-                value={warrantyDays}
-                onChange={(e) => setWarrantyDays(e.target.value)}
-              />
+            {/* Valor total */}
+            <div>
+              <label className="block text-xs font-semibold text-white/40 mb-1.5 uppercase tracking-wider">
+                Valor total (R$) *
+              </label>
+              <div className="relative">
+                <DollarSign className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25 pointer-events-none" />
+                <input type="number" min="0" step="0.01" value={totalAmount}
+                  onChange={e => setTotalAmount(e.target.value)} placeholder="Ex: 500.00"
+                  className="w-full rounded-xl border border-white/10 bg-white/5 pl-10 pr-4 py-2.5
+                    text-sm text-white placeholder:text-white/20 outline-none
+                    focus:border-blue-500/50 focus:bg-white/8 transition-all" />
+              </div>
+              {totalAmount && !isNaN(parseFloat(totalAmount)) && (
+                <p className="text-xs text-white/30 mt-1.5 flex gap-3">
+                  <span>Sinal (20%): {formatCurrency(parseFloat(totalAmount) * 0.2)}</span>
+                  <span>Restante (80%): {formatCurrency(parseFloat(totalAmount) * 0.8)}</span>
+                </p>
+              )}
             </div>
 
-            <Textarea
-              label="Observações (opcional)"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Descreva detalhes do seu orçamento..."
-              rows={4}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-white/40 mb-1.5 uppercase tracking-wider">
+                  Prazo estimado
+                </label>
+                <div className="relative">
+                  <Timer className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25 pointer-events-none" />
+                  <input type="text" value={estimatedTime} onChange={e => setEstimatedTime(e.target.value)}
+                    placeholder="Ex: 3 dias úteis"
+                    className="w-full rounded-xl border border-white/10 bg-white/5 pl-10 pr-4 py-2.5
+                      text-sm text-white placeholder:text-white/20 outline-none
+                      focus:border-blue-500/50 focus:bg-white/8 transition-all" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-white/40 mb-1.5 uppercase tracking-wider">
+                  Garantia (dias)
+                </label>
+                <div className="relative">
+                  <ShieldCheck className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25 pointer-events-none" />
+                  <input type="number" min="0" value={warrantyDays} onChange={e => setWarrantyDays(e.target.value)}
+                    className="w-full rounded-xl border border-white/10 bg-white/5 pl-10 pr-4 py-2.5
+                      text-sm text-white placeholder:text-white/20 outline-none
+                      focus:border-blue-500/50 focus:bg-white/8 transition-all" />
+                </div>
+              </div>
+            </div>
 
-            <p className="text-xs text-slate-400">
-              O sinal (20%) e restante (80%) são calculados automaticamente pelo sistema.
-            </p>
+            <div>
+              <label className="block text-xs font-semibold text-white/40 mb-1.5 uppercase tracking-wider">
+                Observações (opcional)
+              </label>
+              <textarea value={description} onChange={e => setDescription(e.target.value)}
+                placeholder="Descreva detalhes do seu orçamento..." rows={3}
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5
+                  text-sm text-white placeholder:text-white/20 outline-none resize-none
+                  focus:border-blue-500/50 focus:bg-white/8 transition-all" />
+            </div>
 
-            <div className="flex justify-end gap-3 pt-2">
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => navigate('/prestador/pedidos')}
-              >
+            <div className="flex gap-3 pt-1">
+              <button type="button" onClick={() => navigate('/prestador/pedidos')}
+                className="flex-1 rounded-xl border border-white/10 py-2.5 text-sm font-semibold text-white/40
+                  hover:border-white/20 hover:text-white/70 transition-all">
                 Cancelar
-              </Button>
-              <Button type="submit" loading={submitting}>
-                Enviar orçamento
-              </Button>
+              </button>
+              <button type="submit" disabled={submitting}
+                className="flex-1 rounded-xl bg-blue-600 hover:bg-blue-500 py-2.5 text-sm font-bold text-white
+                  transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                {submitting ? (
+                  <><span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Enviando...</>
+                ) : (
+                  <><Send className="h-4 w-4" /> Enviar orçamento</>
+                )}
+              </button>
             </div>
           </form>
-        </Card>
+        </motion.div>
       )}
     </div>
   );
