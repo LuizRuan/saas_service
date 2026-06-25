@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Wrench, Mail, ArrowLeft, CheckCircle2 } from 'lucide-react';
-import { api } from '@/lib/axios';
+import api from '@/lib/axios';
 
 export function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
