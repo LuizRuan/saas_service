@@ -1,15 +1,5 @@
-import { Request, Response } from 'express';
-import { RateLimitRequestHandler } from 'express-rate-limit';
-
-// Importação dinâmica para evitar erro se o pacote não estiver instalado
-let rateLimit: (options: any) => RateLimitRequestHandler;
-
-try {
-  rateLimit = require('express-rate-limit');
-} catch {
-  // Fallback no-op caso o pacote não esteja instalado
-  rateLimit = () => (_req: Request, _res: Response, next: () => void) => next();
-}
+import { Request, Response, NextFunction } from 'express';
+import rateLimit from 'express-rate-limit';
 
 export const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
@@ -20,7 +10,7 @@ export const authRateLimiter = rateLimit({
     success: false,
     message: 'Muitas tentativas de login. Tente novamente em 15 minutos.',
   },
-  skip: (req: Request) => process.env.NODE_ENV === 'test',
+  skip: (_req: Request, _res: Response, _next: NextFunction) => process.env.NODE_ENV === 'test',
 });
 
 export const generalRateLimiter = rateLimit({
@@ -32,5 +22,5 @@ export const generalRateLimiter = rateLimit({
     success: false,
     message: 'Muitas requisições. Tente novamente em breve.',
   },
-  skip: (req: Request) => process.env.NODE_ENV === 'test',
+  skip: (_req: Request, _res: Response, _next: NextFunction) => process.env.NODE_ENV === 'test',
 });
