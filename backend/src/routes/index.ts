@@ -8,6 +8,7 @@ import paymentRoutes from './payment.routes';
 import reviewRoutes from './review.routes';
 import disputeRoutes from './dispute.routes';
 import adminRoutes from './admin.routes';
+import providerRoutes from './provider.routes';
 
 const router = Router();
 
@@ -20,6 +21,7 @@ router.use('/payments', paymentRoutes);
 router.use('/reviews', reviewRoutes);
 router.use('/disputes', disputeRoutes);
 router.use('/admin', adminRoutes);
+router.use('/providers', providerRoutes);
 
 // Health check
 router.get('/health', (_req, res) => {
