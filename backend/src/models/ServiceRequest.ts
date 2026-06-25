@@ -10,7 +10,8 @@ export interface IServiceRequest extends Document {
   fullAddress: string;
   description: string;
   photos: string[];
-  desiredDate: Date;
+  desiredDate?: Date;
+  desiredDateEnd?: Date;
   urgency: Urgency;
   status: ServiceRequestStatus;
   selectedProviderId: Types.ObjectId | null;
@@ -59,6 +60,9 @@ const serviceRequestSchema = new Schema<IServiceRequest>(
     },
     photos: [{ type: String }],
     desiredDate: {
+      type: Date,
+    },
+    desiredDateEnd: {
       type: Date,
     },
     urgency: {

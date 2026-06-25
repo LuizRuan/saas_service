@@ -15,6 +15,7 @@ interface CreateServiceRequestInput {
   description: string;
   photos?: string[];
   desiredDate?: Date;
+  desiredDateEnd?: Date;
   urgency?: string;
 }
 

@@ -19,6 +19,21 @@ class ProviderController {
     const result = await providerService.getById(id);
     sendSuccess(res, result);
   }
+
+  async getMe(req: AuthenticatedRequest, res: Response): Promise<void> {
+    const userId = req.user!.userId;
+    const result = await providerService.getMe(userId);
+    sendSuccess(res, result);
+  }
+
+  async updateMe(req: AuthenticatedRequest, res: Response): Promise<void> {
+    const userId = req.user!.userId;
+    const { professionalName, bio, categories, cities, neighborhoods } = req.body;
+    const result = await providerService.updateMe(userId, {
+      professionalName, bio, categories, cities, neighborhoods,
+    });
+    sendSuccess(res, result, 'Perfil atualizado com sucesso');
+  }
 }
 
 export const providerController = new ProviderController();

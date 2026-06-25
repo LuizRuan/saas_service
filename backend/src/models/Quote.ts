@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
 import { QuoteStatus } from '../types';
+import { env } from '../config/env';
 
 export interface IQuote extends Document {
   serviceRequestId: Types.ObjectId;
@@ -35,7 +36,7 @@ const quoteSchema = new Schema<IQuote>(
     },
     depositPercentage: {
       type: Number,
-      default: 20,
+      default: () => env.DEPOSIT_PERCENT,
       immutable: true,
     },
     depositAmount: {
@@ -82,11 +83,12 @@ quoteSchema.index({ serviceRequestId: 1 });
 quoteSchema.index({ providerId: 1 });
 quoteSchema.index({ status: 1 });
 
-// Sempre calcula sinal como 20%
+// Calcula sinal com base em env.DEPOSIT_PERCENT
 quoteSchema.pre('validate', function (next) {
   if (this.totalAmount) {
-    this.depositPercentage = 20;
-    this.depositAmount = Math.round(this.totalAmount * 0.2 * 100) / 100;
+    const depositFraction = env.DEPOSIT_PERCENT / 100;
+    this.depositPercentage = env.DEPOSIT_PERCENT;
+    this.depositAmount = Math.round(this.totalAmount * depositFraction * 100) / 100;
     this.remainingAmount = Math.round((this.totalAmount - this.depositAmount) * 100) / 100;
   }
   next();

@@ -1,0 +1,24 @@
+# Arquivos de ambiente
+.env
+*.local
+
+# Sistemas operacionais
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/settings.json
+.idea/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Worktrees do Claude Code
+.claude/worktrees/
+.worktrees/
+
+# Storybook (futuro)
+storybook-static/
+
+# Coverage (futuro)
+coverage/

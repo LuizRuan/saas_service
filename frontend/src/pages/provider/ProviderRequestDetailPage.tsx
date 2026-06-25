@@ -2,21 +2,26 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  ArrowLeft, MapPin, Calendar, Clock, AlertCircle,
+  ArrowLeft, MapPin, AlertCircle,
   Send, CheckCircle2, DollarSign, ShieldCheck, Timer,
 } from 'lucide-react';
 import { serviceRequestService } from '@/services/serviceRequest.service';
 import { quoteService } from '@/services/quote.service';
-import type { Category, CreateQuoteData, Quote, ServiceRequest } from '@/types';
+import type { CreateQuoteData, Quote, ServiceRequest, ServiceRequestStatus } from '@/types';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { fadeUp } from '@/lib/animations';
+import { URGENCY_CONFIG, getCategoryName } from '@/lib/constants';
 
-const URGENCY: Record<string, string> = { low: 'Baixa', medium: 'Média', high: 'Alta' };
-
-const fadeUp = (i = 0) => ({
-  initial: { opacity: 0, y: 16 },
-  animate: { opacity: 1, y: 0 },
-  transition: { delay: i * 0.08, duration: 0.4, ease: 'easeOut' as const },
-});
+const SR_STATUS_CONFIG: Record<ServiceRequestStatus, { label: string; cls: string }> = {
+  open:             { label: 'Aberta',          cls: 'text-blue-400 bg-blue-500/10 border-blue-500/20' },
+  quoted:           { label: 'Com orçamentos',  cls: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20' },
+  scheduled:        { label: 'Agendada',        cls: 'text-purple-400 bg-purple-500/10 border-purple-500/20' },
+  in_progress:      { label: 'Em andamento',    cls: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
+  waiting_approval: { label: 'Aguard. aprovação', cls: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20' },
+  completed:        { label: 'Concluída',       cls: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
+  cancelled:        { label: 'Cancelada',       cls: 'text-red-400 bg-red-500/10 border-red-500/20' },
+  dispute:          { label: 'Em disputa',      cls: 'text-orange-400 bg-orange-500/10 border-orange-500/20' },
+};
 
 export function ProviderRequestDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -36,8 +41,10 @@ export function ProviderRequestDetailPage() {
 
   useEffect(() => {
     if (!id) return;
+    const controller = new AbortController();
     Promise.all([serviceRequestService.getById(id), quoteService.getMy()])
       .then(([req, myQuotes]) => {
+        if (controller.signal.aborted) return;
         setRequest(req);
         const found = myQuotes.find((q) => {
           const reqId = typeof q.serviceRequestId === 'object' ? q.serviceRequestId._id : q.serviceRequestId;
@@ -45,12 +52,10 @@ export function ProviderRequestDetailPage() {
         });
         if (found) setExistingQuote(found);
       })
-      .catch(() => setError('Não foi possível carregar o pedido.'))
-      .finally(() => setLoading(false));
+      .catch(() => { if (!controller.signal.aborted) setError('Não foi possível carregar o pedido.'); })
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
   }, [id]);
-
-  const getCategoryName = (categoryId: string | Category) =>
-    typeof categoryId === 'object' ? categoryId.name : '—';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,9 +133,8 @@ export function ProviderRequestDetailPage() {
               {request.city}{request.neighborhood ? ` — ${request.neighborhood}` : ''}
             </div>
           </div>
-          <span className="flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full border
-            text-blue-400 bg-blue-500/10 border-blue-500/20 shrink-0">
-            <Clock className="h-3 w-3" /> Aberta
+          <span className={`flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full border shrink-0 ${SR_STATUS_CONFIG[request.status]?.cls ?? ''}`}>
+            {SR_STATUS_CONFIG[request.status]?.label ?? request.status}
           </span>
         </div>
 
@@ -143,7 +147,7 @@ export function ProviderRequestDetailPage() {
           )}
           <div className="rounded-xl border border-white/5 bg-white/[0.02] p-3">
             <p className="text-xs text-white/30 mb-1">Urgência</p>
-            <p className="text-white/70">{URGENCY[request.urgency] ?? request.urgency}</p>
+            <p className="text-white/70">{URGENCY_CONFIG[request.urgency]?.label ?? request.urgency}</p>
           </div>
           {request.desiredDate && (
             <div className="rounded-xl border border-white/5 bg-white/[0.02] p-3">

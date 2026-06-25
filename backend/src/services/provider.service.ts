@@ -72,6 +72,30 @@ class ProviderService {
     };
   }
 
+  async getMe(userId: string) {
+    const profile = await ProviderProfile.findOne({ userId })
+      .populate('userId', 'name email phone city state')
+      .populate('categories', 'name slug');
+    if (!profile) throw new NotFoundError('Perfil de prestador');
+    return profile;
+  }
+
+  async updateMe(userId: string, input: {
+    professionalName?: string;
+    bio?: string;
+    categories?: string[];
+    cities?: string[];
+    neighborhoods?: string[];
+  }) {
+    const profile = await ProviderProfile.findOneAndUpdate(
+      { userId },
+      { $set: input },
+      { new: true, runValidators: true }
+    ).populate('categories', 'name slug');
+    if (!profile) throw new NotFoundError('Perfil de prestador');
+    return profile;
+  }
+
   async getById(providerId: string) {
     const profile = await ProviderProfile.findOne({ userId: providerId })
       .populate('userId', 'name email city state')

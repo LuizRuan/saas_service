@@ -197,6 +197,19 @@ class AuthService {
   }
 
   /**
+   * Atualiza perfil básico do usuário autenticado
+   */
+  async updateMe(userId: string, input: { name?: string; phone?: string; city?: string; state?: string }): Promise<IUser> {
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { $set: input },
+      { new: true, runValidators: true }
+    );
+    if (!user) throw new NotFoundError('Usuário');
+    return user;
+  }
+
+  /**
    * Busca dados do usuário autenticado
    */
   async getMe(userId: string): Promise<any> {

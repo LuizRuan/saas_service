@@ -29,6 +29,10 @@ const userSchema = new Schema<IUser>(
       unique: true,
       lowercase: true,
       trim: true,
+      validate: {
+        validator: (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),
+        message: 'E-mail inválido',
+      },
     },
     passwordHash: {
       type: String,

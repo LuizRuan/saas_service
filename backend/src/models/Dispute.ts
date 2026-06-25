@@ -59,7 +59,7 @@ const disputeSchema = new Schema<IDispute>(
   }
 );
 
-disputeSchema.index({ orderId: 1 });
+disputeSchema.index({ orderId: 1 }, { unique: true });
 disputeSchema.index({ openedBy: 1 });
 disputeSchema.index({ status: 1 });
 

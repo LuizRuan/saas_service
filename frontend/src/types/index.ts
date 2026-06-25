@@ -119,8 +119,17 @@ export interface Order {
   status: OrderStatus;
   beforePhotos: string[];
   afterPhotos: string[];
+  totalAmount?: number;
+  depositAmount?: number;
+  remainingAmount?: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ApiErrorResponse {
+  success: false;
+  message: string;
+  errors?: Array<{ field: string; message: string }>;
 }
 
 export interface CreateServiceRequestData {
@@ -132,6 +141,22 @@ export interface CreateServiceRequestData {
   description: string;
   urgency?: Urgency;
   desiredDate?: string;
+  desiredDateEnd?: string;
+  budget?: number;
+}
+
+export interface ProviderSearchResult {
+  _id: string;
+  userId: { _id: string; name: string; email: string; city: string; state: string };
+  professionalName: string;
+  bio: string;
+  categories: Category[];
+  cities: string[];
+  status: ProviderStatus;
+  plan: string;
+  averageRating: number;
+  reviewCount: number;
+  completedServices: number;
 }
 
 export interface CreateQuoteData {

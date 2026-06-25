@@ -90,10 +90,18 @@ class AuthController {
    */
   async getMe(req: AuthenticatedRequest, res: Response): Promise<void> {
     const userId = req.user!.userId;
-
     const data = await authService.getMe(userId);
-
     sendSuccess(res, data);
+  }
+
+  /**
+   * PUT /api/auth/me
+   */
+  async updateMe(req: AuthenticatedRequest, res: Response): Promise<void> {
+    const userId = req.user!.userId;
+    const { name, phone, city, state } = req.body;
+    const user = await authService.updateMe(userId, { name, phone, city, state });
+    sendSuccess(res, { user }, 'Perfil atualizado com sucesso');
   }
 }
 

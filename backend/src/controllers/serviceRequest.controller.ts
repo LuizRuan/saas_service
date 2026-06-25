@@ -6,7 +6,7 @@ import { buildFilePaths } from '../utils/upload';
 
 class ServiceRequestController {
   async create(req: AuthenticatedRequest, res: Response): Promise<void> {
-    const { categoryId, city, neighborhood, approximateAddress, fullAddress, description, desiredDate, urgency } = req.body;
+    const { categoryId, city, neighborhood, approximateAddress, fullAddress, description, desiredDate, desiredDateEnd, urgency } = req.body;
     const files = (req.files as Express.Multer.File[]) ?? [];
     const photos = buildFilePaths(files, 'service-requests');
 
@@ -20,10 +20,12 @@ class ServiceRequestController {
       description,
       photos,
       desiredDate: desiredDate ? new Date(desiredDate) : undefined,
+      desiredDateEnd: desiredDateEnd ? new Date(desiredDateEnd) : undefined,
       urgency,
     });
     sendSuccess(res, request, 'Solicitação criada com sucesso!', 201);
   }
+
 
   async getMy(req: AuthenticatedRequest, res: Response): Promise<void> {
     const requests = await serviceRequestService.getMy(req.user!.userId);

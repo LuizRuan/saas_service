@@ -5,6 +5,7 @@ import { ProviderProfile } from '../models/ProviderProfile';
 import { ServiceRequest } from '../models/ServiceRequest';
 import { Quote } from '../models/Quote';
 import { env } from '../config/env';
+import mongoose from 'mongoose';
 
 const CATEGORIES = [
   { name: 'Pintor', slug: 'pintor', description: 'Serviços de pintura residencial e comercial' },
@@ -78,8 +79,10 @@ export async function runSeed(): Promise<void> {
     console.log(`  ⏭️  Admin já existe: ${adminEmail}`);
   }
 
-  // Seeds demo — criados em todos os ambientes para facilitar testes
-  await seedDemoUsers(categoryDocs);
+  // Seeds demo — NUNCA em produção (contas com senha pública)
+  if (env.NODE_ENV !== 'production') {
+    await seedDemoUsers(categoryDocs);
+  }
 
   console.log('\n🎉 Seed concluído com sucesso!\n');
 }
@@ -231,6 +234,7 @@ async function seedDemoUsers(categoryDocs: any[]): Promise<void> {
       if (!provider) continue;
 
       const total = Math.floor(Math.random() * 800 + 200);
+      const quoteStatus = req.status === 'completed' ? 'accepted' : req.status === 'scheduled' ? 'accepted' : 'sent';
       await Quote.create({
         serviceRequestId: req._id,
         providerId: provider._id,
@@ -240,8 +244,13 @@ async function seedDemoUsers(categoryDocs: any[]): Promise<void> {
         description: `Orçamento detalhado para o serviço solicitado. Inclui mão de obra e deslocamento.`,
         estimatedTime: `${Math.floor(Math.random() * 3 + 1)} dia(s)`,
         warrantyDays: 30,
-        status: req.status === 'completed' ? 'accepted' : req.status === 'scheduled' ? 'accepted' : 'sent',
+        status: quoteStatus,
       });
+
+      // Atualiza selectedProviderId nas solicitações com orçamento aceito
+      if (quoteStatus === 'accepted') {
+        await ServiceRequest.findByIdAndUpdate(req._id, { selectedProviderId: new mongoose.Types.ObjectId(provider._id.toString()) });
+      }
     }
     console.log('  ✅ Orçamentos demo criados');
   } else {

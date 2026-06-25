@@ -1,7 +1,7 @@
 import { Dispute } from '../models/Dispute';
 import { Order } from '../models/Order';
 import { ServiceRequest } from '../models/ServiceRequest';
-import { ForbiddenError, NotFoundError } from '../utils/errors';
+import { ConflictError, ForbiddenError, NotFoundError } from '../utils/errors';
 import { UserRole } from '../types';
 
 interface CreateDisputeInput {
@@ -19,6 +19,9 @@ class DisputeService {
     const isInvolved =
       order.clientId.toString() === userId || order.providerId.toString() === userId;
     if (!isInvolved) throw new ForbiddenError();
+
+    const existing = await Dispute.findOne({ orderId: input.orderId });
+    if (existing) throw new ConflictError('Já existe uma disputa aberta para esta ordem');
 
     const dispute = await Dispute.create({ ...input, openedBy: userId });
 

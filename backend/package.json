@@ -6,11 +6,18 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "dev:memory": "cross-env USE_MEMORY_DB=true tsx watch src/server.ts",
+    "dev:debug": "tsx --inspect watch src/server.ts",
     "build": "tsc",
+    "clean": "rm -rf dist",
     "render-build": "npm install --include=dev && tsc",
     "start": "node dist/server.js",
     "seed": "tsx src/seeds/seed.ts",
-    "typecheck": "tsc --noEmit"
+    "seed:prod": "tsx src/seeds/seedProd.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix"
   },
   "keywords": [
     "marketplace",
@@ -37,11 +44,16 @@
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
+    "@types/jest": "^29.5.14",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/morgan": "^1.9.9",
     "@types/multer": "^1.4.12",
     "@types/node": "^22.10.5",
+    "@types/supertest": "^6.0.2",
     "cross-env": "^10.1.0",
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0",
+    "ts-jest": "^29.2.5",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3"
   }

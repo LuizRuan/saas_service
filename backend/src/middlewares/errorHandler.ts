@@ -7,6 +7,15 @@ export function errorHandler(
   res: Response,
   _next: NextFunction
 ): void {
+  // JSON mal-formado no body
+  if (err instanceof SyntaxError && 'body' in err) {
+    res.status(400).json({
+      success: false,
+      message: 'JSON inválido no corpo da requisição',
+    });
+    return;
+  }
+
   // Erro operacional (esperado)
   if (err instanceof ValidationError) {
     res.status(err.statusCode).json({

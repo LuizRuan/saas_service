@@ -10,18 +10,20 @@ import routes from './routes';
 
 const app = express();
 
+// Lista explícita de origens permitidas (não usar includes para evitar subdomínios maliciosos)
+const ALLOWED_ORIGINS = new Set([
+  'http://localhost:5173',
+  'http://localhost:3000',
+  env.FRONTEND_URL,
+].filter(Boolean));
+
 // Middlewares globais
 app.use(helmet());
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Permite: sem origin (curl, Postman), localhost e qualquer subdomínio .vercel.app
-      if (
-        !origin ||
-        origin.includes('localhost') ||
-        origin.includes('vercel.app') ||
-        origin === env.FRONTEND_URL
-      ) {
+      // Permite: sem origin (curl, Postman) ou origem na lista autorizada
+      if (!origin || ALLOWED_ORIGINS.has(origin)) {
         callback(null, true);
       } else {
         callback(new Error(`CORS: origem não permitida — ${origin}`));

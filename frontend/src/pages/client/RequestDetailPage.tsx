@@ -73,6 +73,15 @@ export function RequestDetailPage() {
     try {
       const order = await quoteService.accept(quoteId);
       setSuccessOrder(order);
+      // Atualiza status local da solicitação e dos orçamentos
+      setRequest(prev => prev ? { ...prev, status: 'scheduled' } : prev);
+      setQuotes(prev => prev.map(q =>
+        q._id === quoteId
+          ? { ...q, status: 'accepted' }
+          : q.status === 'sent'
+            ? { ...q, status: 'rejected' }
+            : q
+      ));
     } catch {
       setActionError('Não foi possível aceitar o orçamento.');
     } finally {

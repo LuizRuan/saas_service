@@ -14,7 +14,9 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
-    }
+    },
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
   },
   "include": ["src"]
 }

@@ -5,8 +5,9 @@ import {
   ClipboardList, MapPin, Calendar, ArrowRight,
   CheckCircle2, Clock, XCircle, Package, Plus, AlertCircle,
 } from 'lucide-react';
-import api from '@/lib/axios';
+import { orderService } from '@/services/order.service';
 import { formatDate, formatCurrency } from '@/lib/utils';
+import type { Order, OrderStatus } from '@/types';
 
 const fadeUp = (i = 0) => ({
   initial: { opacity: 0, y: 18 },
@@ -14,22 +15,13 @@ const fadeUp = (i = 0) => ({
   transition: { delay: i * 0.06, duration: 0.4, ease: 'easeOut' as const },
 });
 
-interface Order {
-  _id: string;
-  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
-  serviceRequestId: { description: string; city: string; categoryId: { name: string } };
-  providerId: { name: string };
-  totalAmount: number;
-  depositAmount: number;
-  createdAt: string;
-  completedAt?: string;
-}
-
-const STATUS_CONFIG = {
-  pending:     { label: 'Aguardando início',    icon: Clock,         cls: 'text-amber-400  bg-amber-500/10  border-amber-500/20'  },
-  in_progress: { label: 'Em andamento',         icon: Package,       cls: 'text-blue-400   bg-blue-500/10   border-blue-500/20'   },
-  completed:   { label: 'Concluído',            icon: CheckCircle2,  cls: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
-  cancelled:   { label: 'Cancelado',            icon: XCircle,       cls: 'text-red-400    bg-red-500/10    border-red-500/20'    },
+const STATUS_CONFIG: Record<OrderStatus, { label: string; icon: React.ElementType; cls: string }> = {
+  created:          { label: 'Aguardando início',    icon: Clock,         cls: 'text-amber-400   bg-amber-500/10   border-amber-500/20'   },
+  scheduled:        { label: 'Agendado',             icon: Calendar,      cls: 'text-blue-400    bg-blue-500/10    border-blue-500/20'    },
+  in_progress:      { label: 'Em andamento',         icon: Package,       cls: 'text-violet-400  bg-violet-500/10  border-violet-500/20'  },
+  waiting_approval: { label: 'Aguardando aprovação', icon: Clock,         cls: 'text-amber-400   bg-amber-500/10   border-amber-500/20'   },
+  completed:        { label: 'Concluído',            icon: CheckCircle2,  cls: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
+  cancelled:        { label: 'Cancelado',            icon: XCircle,       cls: 'text-red-400     bg-red-500/10     border-red-500/20'     },
 };
 
 export function MyOrdersPage() {
@@ -39,10 +31,14 @@ export function MyOrdersPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    api.get('/orders/my')
-      .then(res => setOrders(res.data.data ?? []))
-      .catch(() => setError('Não foi possível carregar suas ordens.'))
+    const controller = new AbortController();
+    orderService.getMy()
+      .then(data => setOrders(data))
+      .catch(() => {
+        if (!controller.signal.aborted) setError('Não foi possível carregar suas ordens.');
+      })
       .finally(() => setLoading(false));
+    return () => controller.abort();
   }, []);
 
   return (
@@ -133,7 +129,7 @@ export function MyOrdersPage() {
             return (
               <motion.div key={order._id} {...fadeUp(i)}>
                 <Link
-                  to={`/cliente/solicitacoes`}
+                  to={`/cliente/solicitacoes/${typeof order.serviceRequestId === 'object' ? (order.serviceRequestId as any)?._id : order.serviceRequestId}`}
                   className="group block rounded-2xl border border-white/8 p-5 transition-all duration-300
                     hover:border-white/15 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/20"
                   style={{ background: 'rgba(255,255,255,0.03)' }}
