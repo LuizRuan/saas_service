@@ -1,126 +1,218 @@
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import {
+  Search, FileText, ClipboardList, Star, AlertTriangle,
+  ArrowRight, Zap, CheckCircle2, TrendingUp, Users,
+} from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { Search, FileText, ClipboardList, Star, AlertTriangle, ArrowRight, Sparkles } from 'lucide-react';
+import api from '@/lib/axios';
 
-const cardVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: 0.15 + i * 0.1, duration: 0.5, ease: 'easeOut' as const },
-  }),
-};
+const fadeUp = (delay = 0) => ({
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  transition: { delay, duration: 0.5, ease: 'easeOut' as const },
+});
+
+interface ProviderStats {
+  availableRequests: number;
+  pendingQuotes: number;
+  acceptedQuotes: number;
+  profileStatus: 'pending' | 'approved' | 'blocked';
+}
+
+const ACTION_CARDS = [
+  {
+    to: '/prestador/pedidos',
+    icon: Search,
+    gradient: 'from-blue-500/20 to-blue-600/10',
+    border: 'border-blue-500/20 hover:border-blue-400/40',
+    iconBg: 'from-blue-500 to-blue-600',
+    iconGlow: 'rgba(59,130,246,0.4)',
+    title: 'Pedidos Disponíveis',
+    desc: 'Veja pedidos de clientes na sua região e envie seus orçamentos.',
+  },
+  {
+    to: '/prestador/orcamentos',
+    icon: FileText,
+    gradient: 'from-violet-500/20 to-purple-600/10',
+    border: 'border-violet-500/20 hover:border-violet-400/40',
+    iconBg: 'from-violet-500 to-purple-600',
+    iconGlow: 'rgba(139,92,246,0.4)',
+    title: 'Meus Orçamentos',
+    desc: 'Acompanhe as propostas enviadas e seus status de aprovação.',
+  },
+];
 
 export function ProviderDashboardPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const [stats, setStats] = useState<ProviderStats | null>(null);
+  const firstName = user?.name?.split(' ')[0] ?? 'profissional';
+
+  useEffect(() => {
+    // Busca stats básicos do perfil do prestador
+    api.get('/providers/search').then(res => {
+      const providers = res.data.data?.providers ?? [];
+      const myProfile = providers.find((p: any) => p.userId?._id === user?._id);
+      setStats({
+        availableRequests: 0,
+        pendingQuotes: 0,
+        acceptedQuotes: 0,
+        profileStatus: myProfile?.status ?? 'pending',
+      });
+    }).catch(() => {
+      setStats({ availableRequests: 0, pendingQuotes: 0, acceptedQuotes: 0, profileStatus: 'pending' });
+    });
+  }, [user]);
+
+  const isPending = stats?.profileStatus === 'pending' || !stats;
+  const isApproved = stats?.profileStatus === 'approved';
 
   return (
-    <div>
-      {/* Alert */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="mb-6 flex items-start gap-4 rounded-2xl border border-amber-200/60 bg-gradient-to-r from-amber-50 to-orange-50 p-5"
-      >
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100">
-          <AlertTriangle className="h-5 w-5 text-amber-600" />
-        </div>
-        <div>
-          <p className="font-semibold text-amber-800">Perfil aguardando aprovação</p>
-          <p className="text-sm text-amber-700/80 mt-0.5">
-            Seu cadastro está em análise pela equipe MãoCerta. Assim que aprovado, você poderá
-            visualizar pedidos e enviar orçamentos.
-          </p>
-        </div>
-      </motion.div>
+    <div className="relative max-w-5xl mx-auto">
+      {/* Orbs */}
+      <div className="orb w-80 h-80 bg-blue-600 -top-20 -right-20 opacity-10 pointer-events-none" />
+      <div className="orb w-64 h-64 bg-violet-600 bottom-20 -left-20 opacity-8 pointer-events-none" />
 
-      {/* Welcome */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1, duration: 0.4 }}
-        className="mb-8"
-      >
-        <div className="flex items-center gap-2 mb-1">
-          <Sparkles className="h-5 w-5 text-success" />
-          <span className="text-sm font-medium text-success-dark">Área do prestador</span>
+      {/* ── Status Banner ──────────────────────── */}
+      {isPending && (
+        <motion.div {...fadeUp(0)}
+          className="mb-6 flex items-start gap-4 rounded-2xl border border-amber-500/20 bg-amber-500/8 p-5">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 border border-amber-500/20">
+            <AlertTriangle className="h-5 w-5 text-amber-400" />
+          </div>
+          <div>
+            <p className="font-semibold text-amber-300">Perfil aguardando aprovação</p>
+            <p className="text-sm text-amber-400/60 mt-0.5">
+              Seu cadastro está em análise. Assim que aprovado, você visualizará pedidos e enviará orçamentos.
+            </p>
+          </div>
+        </motion.div>
+      )}
+
+      {isApproved && (
+        <motion.div {...fadeUp(0)}
+          className="mb-6 flex items-start gap-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/8 p-5">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 border border-emerald-500/20">
+            <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+          </div>
+          <div>
+            <p className="font-semibold text-emerald-300">Perfil aprovado! 🎉</p>
+            <p className="text-sm text-emerald-400/60 mt-0.5">
+              Você já pode visualizar pedidos e enviar orçamentos para clientes na sua região.
+            </p>
+          </div>
+        </motion.div>
+      )}
+
+      {/* ── Welcome ────────────────────────────── */}
+      <motion.div {...fadeUp(0.05)} className="mb-8">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-500/15 border border-blue-500/20">
+            <Zap className="h-3.5 w-3.5 text-blue-400" />
+          </div>
+          <span className="text-xs font-semibold text-blue-400/80 uppercase tracking-widest">Área do prestador</span>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-          Olá, {user?.name?.split(' ')[0]}!
+        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-2">
+          Olá, <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300">{firstName}!</span>
         </h1>
-        <p className="text-slate-500 mt-1">
-          Veja os pedidos disponíveis na sua região e envie orçamentos para conquistar novos clientes.
+        <p className="text-slate-400 text-sm max-w-md">
+          Acompanhe seus pedidos disponíveis, orçamentos enviados e conquiste novos clientes.
         </p>
       </motion.div>
 
-      {/* CTA principal */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.98 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.15, duration: 0.5 }}
-      >
-        <Link
-          to="/prestador/pedidos"
-          className="group mb-8 flex items-center gap-5 rounded-2xl bg-gradient-to-r from-primary to-primary-light p-6 sm:p-7 text-white shadow-premium hover:shadow-lg transition-all"
-        >
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white/15 group-hover:bg-white/20 transition-colors">
-            <Search className="h-7 w-7" />
+      {/* ── Mini KPIs ──────────────────────────── */}
+      <motion.div {...fadeUp(0.1)} className="grid grid-cols-3 gap-3 mb-8">
+        {[
+          { icon: TrendingUp, label: 'Pedidos disponíveis', value: '—',     color: 'text-blue-400'    },
+          { icon: FileText,   label: 'Orçamentos enviados',  value: '—',     color: 'text-violet-400'  },
+          { icon: Users,      label: 'Clientes atendidos',   value: '—',     color: 'text-emerald-400' },
+        ].map((s) => (
+          <div key={s.label}
+            className="flex flex-col items-center text-center rounded-2xl border border-white/8 py-4 px-3"
+            style={{ background: 'rgba(255,255,255,0.03)' }}>
+            <s.icon className={`h-5 w-5 ${s.color} mb-2`} />
+            <p className="text-xl font-bold text-white">{s.value}</p>
+            <p className="text-[10px] text-white/35 mt-0.5 leading-tight">{s.label}</p>
           </div>
-          <div className="flex-1">
-            <p className="font-bold text-lg sm:text-xl">Ver pedidos disponíveis</p>
-            <p className="text-white/70 text-sm mt-0.5">
-              Encontre pedidos de clientes na sua região e envie seus orçamentos
-            </p>
-          </div>
-          <ArrowRight className="h-5 w-5 text-white/50 group-hover:text-white group-hover:translate-x-1 transition-all shrink-0" />
-        </Link>
+        ))}
       </motion.div>
 
-      <div className="grid sm:grid-cols-2 gap-5 mb-8">
-        {[
-          {
-            to: '/prestador/pedidos',
-            icon: Search,
-            bg: 'bg-gradient-to-br from-primary to-primary-light',
-            title: 'Pedidos disponíveis',
-            desc: 'Veja pedidos de clientes na sua região e envie orçamentos.',
-          },
-          {
-            to: '/prestador/orcamentos',
-            icon: FileText,
-            bg: 'bg-gradient-to-br from-blue-500 to-blue-600',
-            title: 'Meus orçamentos',
-            desc: 'Acompanhe os orçamentos enviados e seus status.',
-          },
-        ].map((card, i) => (
-          <motion.div key={card.to} custom={i} variants={cardVariants} initial="hidden" animate="visible">
-            <Link
-              to={card.to}
-              className="group block rounded-2xl border border-slate-100 bg-white p-6 shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-300"
-            >
-              <div className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl ${card.bg} shadow-md`}>
+      {/* ── CTA Principal ──────────────────────── */}
+      <motion.div {...fadeUp(0.15)} className="mb-8">
+        <button
+          onClick={() => navigate('/prestador/pedidos')}
+          className="group relative w-full flex items-center gap-5 rounded-2xl p-6 sm:p-7 overflow-hidden
+            border border-blue-500/20 hover:border-blue-400/40 transition-all duration-300 text-left"
+          style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.12) 0%, rgba(99,102,241,0.08) 100%)' }}
+        >
+          <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+            style={{ background: 'linear-gradient(135deg, rgba(255,255,255,0.04) 0%, transparent 60%)' }} />
+
+          <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl
+            bg-gradient-to-br from-blue-500 to-indigo-600 shadow-xl group-hover:scale-105 transition-transform"
+            style={{ boxShadow: '0 0 30px -5px rgba(59,130,246,0.5)' }}>
+            <Search className="h-6 w-6 text-white" />
+          </div>
+
+          <div className="flex-1">
+            <p className="font-bold text-lg text-white">Ver pedidos disponíveis</p>
+            <p className="text-sm text-white/40 mt-0.5">
+              Encontre clientes que precisam dos seus serviços na sua região.
+            </p>
+          </div>
+
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl
+            border border-white/10 group-hover:border-blue-500/40 group-hover:bg-blue-500/10 transition-all">
+            <ArrowRight className="h-4 w-4 text-white/30 group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all" />
+          </div>
+        </button>
+      </motion.div>
+
+      {/* ── Action Cards ───────────────────────── */}
+      <div className="grid sm:grid-cols-2 gap-4 mb-8">
+        {ACTION_CARDS.map((card, i) => (
+          <motion.div key={card.to} {...fadeUp(0.2 + i * 0.08)}>
+            <Link to={card.to}
+              className={`group relative flex flex-col rounded-2xl border p-6 overflow-hidden
+                transition-all duration-300 hover:-translate-y-1 ${card.border}`}
+              style={{ background: `linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))` }}>
+
+              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl"
+                style={{ boxShadow: `inset 0 0 40px -10px ${card.iconGlow}` }} />
+
+              <div className={`mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br
+                ${card.iconBg} shadow-lg group-hover:scale-110 transition-transform duration-300`}
+                style={{ boxShadow: `0 8px 20px -5px ${card.iconGlow}` }}>
                 <card.icon className="h-5 w-5 text-white" />
               </div>
-              <h3 className="font-semibold text-slate-800 mb-1 group-hover:text-primary transition-colors">{card.title}</h3>
-              <p className="text-sm text-slate-500 leading-relaxed">{card.desc}</p>
+
+              <h3 className="font-bold text-white mb-1.5">{card.title}</h3>
+              <p className="text-sm text-white/40 leading-relaxed flex-1">{card.desc}</p>
+
+              <div className="mt-4 flex items-center gap-1 text-xs font-semibold text-white/30 group-hover:text-white/60 transition-colors">
+                Acessar <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" />
+              </div>
             </Link>
           </motion.div>
         ))}
 
+        {/* Em breve */}
         {[
-          { icon: ClipboardList, title: 'Minhas ordens', desc: 'Gerencie os serviços em andamento e concluídos.' },
-          { icon: Star, title: 'Avaliações', desc: 'Veja o que os clientes dizem sobre o seu trabalho.' },
+          { icon: ClipboardList, title: 'Minhas Ordens', desc: 'Gerencie os serviços em andamento e concluídos.' },
+          { icon: Star,          title: 'Avaliações',    desc: 'Veja o que os clientes dizem sobre seu trabalho.' },
         ].map((card, i) => (
-          <motion.div key={card.title} custom={i + 2} variants={cardVariants} initial="hidden" animate="visible">
-            <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-6 opacity-50 cursor-not-allowed">
-              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-200">
-                <card.icon className="h-5 w-5 text-slate-400" />
+          <motion.div key={card.title} {...fadeUp(0.36 + i * 0.08)}>
+            <div className="relative flex flex-col rounded-2xl border border-white/5 p-6 opacity-35 cursor-not-allowed"
+              style={{ background: 'rgba(255,255,255,0.02)' }}>
+              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/5">
+                <card.icon className="h-5 w-5 text-white/30" />
               </div>
-              <h3 className="font-semibold text-slate-700 mb-1">{card.title}</h3>
-              <p className="text-sm text-slate-400">{card.desc}</p>
-              <span className="mt-3 inline-flex items-center text-[10px] font-semibold text-slate-400 bg-slate-100 rounded-full px-3 py-1 uppercase tracking-wider">
+              <h3 className="font-bold text-white/50 mb-1.5">{card.title}</h3>
+              <p className="text-sm text-white/25 leading-relaxed">{card.desc}</p>
+              <span className="mt-4 inline-flex items-center text-[10px] font-bold uppercase tracking-widest
+                text-white/25 bg-white/5 border border-white/8 rounded-full px-3 py-1 w-fit">
                 Em breve
               </span>
             </div>

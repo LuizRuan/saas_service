@@ -72,6 +72,10 @@ export default {
           '50%': { opacity: '0.7' },
         },
       },
+      opacity: {
+        '3': '0.03',
+        '8': '0.08',
+      },
     },
   },
   plugins: [],
