@@ -2,6 +2,8 @@ import bcrypt from 'bcryptjs';
 import { User } from '../models/User';
 import { Category } from '../models/Category';
 import { ProviderProfile } from '../models/ProviderProfile';
+import { ServiceRequest } from '../models/ServiceRequest';
+import { Quote } from '../models/Quote';
 import { env } from '../config/env';
 
 const CATEGORIES = [
@@ -25,15 +27,38 @@ const CATEGORIES = [
   },
 ];
 
+const SERVICE_DESCRIPTIONS = [
+  'Preciso pintar a sala e dois quartos. A sala tem aproximadamente 20m² e os quartos são menores. Paredes já foram lixadas, só falta a tinta.',
+  'Chuveiro elétrico queimou e preciso trocar. Casa tem sistema monofásico 127v. Tenho o chuveiro novo em casa, só precisa instalar.',
+  'Torneira da pia da cozinha vazando. Já tentei apertar mas o problema continua. Preciso de um encanador com urgência.',
+  'Ar-condicionado split 12.000 BTUs precisando de limpeza e manutenção. Está com mau cheiro e rendendo menos.',
+  'Quero instalar 4 câmeras externas na residência para segurança. A casa tem 2 andares e portão eletrônico.',
+  'Comprei um guarda-roupa de 6 portas e preciso de alguém para montar. São 8 caixas, veio desmontado.',
+  'Pintura externa da fachada de um sobrado. Tinta já foi comprada, só precisa da mão de obra e equipamentos.',
+  'Quadro elétrico antigo precisando de upgrade. Casa tem 4 cômodos e o disjuntor geral fica caindo.',
+  'Dois ralos entupidos no banheiro e a descarga do vaso sanitário com problema. Apartamento no 3º andar.',
+  'Instalação de ar-condicionado novo 9.000 BTUs inverter. Já tenho o aparelho, precisa instalar e fazer a tubulação.',
+];
+
+const NEIGHBORHOODS = [
+  'Centro', 'Vila Mariana', 'Moema', 'Itaim Bibi', 'Pinheiros',
+  'Perdizes', 'Santana', 'Tatuapé', 'Lapa', 'Saúde',
+];
+
+const CITIES = ['São Paulo', 'Guarulhos', 'Santo André', 'São Bernardo do Campo', 'Osasco'];
+
 export async function runSeed(): Promise<void> {
   // --- Seed de categorias ---
   console.log('\n📦 Criando categorias...');
+  const categoryDocs = [];
   for (const cat of CATEGORIES) {
     const exists = await Category.findOne({ slug: cat.slug });
     if (!exists) {
-      await Category.create(cat);
+      const created = await Category.create(cat);
+      categoryDocs.push(created);
       console.log(`  ✅ Categoria criada: ${cat.name}`);
     } else {
+      categoryDocs.push(exists);
       console.log(`  ⏭️  Categoria já existe: ${cat.name}`);
     }
   }
@@ -56,71 +81,174 @@ export async function runSeed(): Promise<void> {
   // --- Seeds demo (apenas em ambiente de desenvolvimento/memória) ---
   const isDev = process.env.NODE_ENV !== 'production';
   if (isDev) {
-    await seedDemoUsers();
+    await seedDemoUsers(categoryDocs);
   }
 
   console.log('\n🎉 Seed concluído com sucesso!\n');
 }
 
-async function seedDemoUsers(): Promise<void> {
+async function seedDemoUsers(categoryDocs: any[]): Promise<void> {
   const demoPassword = await bcrypt.hash('123456', 12);
 
-  // Cliente demo
-  console.log('\n👤 Criando cliente demo...');
-  const clientEmail = 'cliente@maocerta.com';
-  const existingClient = await User.findOne({ email: clientEmail });
-  if (!existingClient) {
-    await User.create({
-      name: 'Maria Cliente',
-      email: clientEmail,
-      passwordHash: demoPassword,
-      role: 'client',
-      status: 'active',
-      phone: '(11) 91111-1111',
-      city: 'São Paulo',
-      state: 'SP',
-    });
-    console.log(`  ✅ Cliente demo criado: ${clientEmail} / 123456`);
-  } else {
-    console.log(`  ⏭️  Cliente demo já existe: ${clientEmail}`);
+  // ── Clientes demo ──────────────────────────────────────────────────────────
+  console.log('\n👤 Criando clientes demo...');
+  const clients = [
+    { email: 'cliente@maocerta.com', name: 'Maria Cliente', phone: '(11) 91111-1111', city: 'São Paulo', state: 'SP' },
+    { email: 'joao.silva@email.com', name: 'João Silva', phone: '(11) 92222-2222', city: 'Guarulhos', state: 'SP' },
+    { email: 'ana.santos@email.com', name: 'Ana Santos', phone: '(11) 93333-3333', city: 'Santo André', state: 'SP' },
+  ];
+
+  const clientDocs: any[] = [];
+  for (const c of clients) {
+    const existing = await User.findOne({ email: c.email });
+    if (!existing) {
+      const doc = await User.create({ ...c, passwordHash: demoPassword, role: 'client', status: 'active' });
+      clientDocs.push(doc);
+      console.log(`  ✅ Cliente criado: ${c.email}`);
+    } else {
+      clientDocs.push(existing);
+      console.log(`  ⏭️  Cliente já existe: ${c.email}`);
+    }
   }
 
-  // Prestador demo
-  console.log('\n🔧 Criando prestador demo...');
-  const providerEmail = 'prestador@maocerta.com';
-  const existingProvider = await User.findOne({ email: providerEmail });
-
-  if (!existingProvider) {
-    const providerUser = await User.create({
+  // ── Prestadores demo ───────────────────────────────────────────────────────
+  console.log('\n🔧 Criando prestadores demo...');
+  const providers = [
+    {
+      email: 'prestador@maocerta.com',
       name: 'João Prestador',
-      email: providerEmail,
-      passwordHash: demoPassword,
-      role: 'provider',
-      status: 'active',
-      phone: '(11) 92222-2222',
+      phone: '(11) 94444-4444',
       city: 'São Paulo',
       state: 'SP',
-    });
-
-    // Busca todas as categorias para atribuir ao prestador
-    const allCategories = await Category.find({ active: true });
-
-    await ProviderProfile.create({
-      userId: providerUser._id,
-      professionalName: 'João Prestador',
-      bio: 'Profissional experiente com mais de 10 anos de experiência. Prestador demo para testes.',
-      document: '123.456.789-00',
-      categories: allCategories.map(c => c._id),
-      cities: ['São Paulo', 'Guarulhos', 'Santo André'],
-      neighborhoods: ['Centro', 'Moema', 'Vila Mariana', 'Itaim Bibi'],
+      professionalName: 'João Prestador - Serviços Gerais',
+      bio: 'Profissional com 10 anos de experiência em serviços residenciais e comerciais.',
       status: 'approved',
-      plan: 'free',
-      verified: false,
-    });
+      averageRating: 4.8,
+      totalReviews: 24,
+      completedServices: 47,
+    },
+    {
+      email: 'carlos.eletricista@email.com',
+      name: 'Carlos Eletricista',
+      phone: '(11) 95555-5555',
+      city: 'São Paulo',
+      state: 'SP',
+      professionalName: 'Carlos - Elétrica Residencial e Comercial',
+      bio: 'Eletricista certificado NR10, 8 anos de experiência.',
+      status: 'approved',
+      averageRating: 4.6,
+      totalReviews: 18,
+      completedServices: 32,
+    },
+    {
+      email: 'pedro.pintor@email.com',
+      name: 'Pedro Pintor',
+      phone: '(11) 96666-6666',
+      city: 'Guarulhos',
+      state: 'SP',
+      professionalName: 'Pedro Pinturas - Acabamento Premium',
+      bio: 'Especializado em pintura residencial de alto padrão.',
+      status: 'pending',
+      averageRating: 0,
+      totalReviews: 0,
+      completedServices: 0,
+    },
+  ];
 
-    console.log(`  ✅ Prestador demo criado: ${providerEmail} / 123456 (aprovado)`);
+  const providerDocs: any[] = [];
+  for (const p of providers) {
+    const existing = await User.findOne({ email: p.email });
+    if (!existing) {
+      const user = await User.create({
+        name: p.name, email: p.email, passwordHash: demoPassword,
+        role: 'provider', status: 'active', phone: p.phone, city: p.city, state: p.state,
+      });
+
+      const allCats = categoryDocs.length > 0 ? categoryDocs : await Category.find({ active: true });
+      await ProviderProfile.create({
+        userId: user._id,
+        professionalName: p.professionalName,
+        bio: p.bio,
+        document: `${Math.floor(Math.random() * 900 + 100)}.${Math.floor(Math.random() * 900 + 100)}.${Math.floor(Math.random() * 900 + 100)}-${Math.floor(Math.random() * 90 + 10)}`,
+        categories: allCats.slice(0, 3).map((c: any) => c._id),
+        cities: [p.city, 'São Paulo'],
+        neighborhoods: ['Centro', 'Vila Mariana', 'Moema'],
+        status: p.status as any,
+        plan: 'free',
+        verified: p.status === 'approved',
+        averageRating: p.averageRating,
+        totalReviews: p.totalReviews,
+        completedServices: p.completedServices,
+      });
+
+      providerDocs.push(user);
+      console.log(`  ✅ Prestador criado: ${p.email} (${p.status})`);
+    } else {
+      providerDocs.push(existing);
+      console.log(`  ⏭️  Prestador já existe: ${p.email}`);
+    }
+  }
+
+  // ── Solicitações de serviço demo ───────────────────────────────────────────
+  console.log('\n📋 Criando solicitações de serviço demo...');
+  const existingRequests = await ServiceRequest.countDocuments();
+
+  if (existingRequests === 0 && clientDocs.length > 0 && categoryDocs.length > 0) {
+    const urgencies: Array<'low' | 'medium' | 'high'> = ['low', 'medium', 'high'];
+    const statuses: Array<'open' | 'quoted' | 'scheduled' | 'in_progress' | 'completed'> = [
+      'open', 'open', 'open', 'quoted', 'quoted', 'open', 'open', 'scheduled', 'in_progress', 'completed',
+    ];
+
+    for (let i = 0; i < SERVICE_DESCRIPTIONS.length; i++) {
+      const client = clientDocs[i % clientDocs.length];
+      const category = categoryDocs[i % categoryDocs.length];
+      const neighborhood = NEIGHBORHOODS[i % NEIGHBORHOODS.length];
+      const city = CITIES[i % CITIES.length];
+
+      await ServiceRequest.create({
+        clientId: client._id,
+        categoryId: category._id,
+        city,
+        neighborhood,
+        approximateAddress: `Rua ${['das Flores', 'dos Pinheiros', 'da Paz', 'do Sol', 'das Acácias'][i % 5]}, ${100 + i * 37}`,
+        description: SERVICE_DESCRIPTIONS[i],
+        urgency: urgencies[i % 3],
+        status: statuses[i],
+      });
+    }
+    console.log(`  ✅ ${SERVICE_DESCRIPTIONS.length} solicitações de serviço criadas`);
   } else {
-    console.log(`  ⏭️  Prestador demo já existe: ${providerEmail}`);
+    console.log(`  ⏭️  Solicitações já existem (${existingRequests} no banco)`);
+  }
+
+  // ── Orçamentos demo ────────────────────────────────────────────────────────
+  console.log('\n💰 Criando orçamentos demo...');
+  const existingQuotes = await Quote.countDocuments();
+
+  if (existingQuotes === 0) {
+    const requests = await ServiceRequest.find({ status: { $in: ['quoted', 'scheduled', 'in_progress', 'completed'] } });
+    const approvedProviders = await User.find({ role: 'provider', status: 'active' });
+
+    for (const req of requests.slice(0, 5)) {
+      const provider = approvedProviders[0];
+      if (!provider) continue;
+
+      const total = Math.floor(Math.random() * 800 + 200);
+      await Quote.create({
+        serviceRequestId: req._id,
+        providerId: provider._id,
+        totalAmount: total,
+        depositAmount: Math.round(total * 0.2 * 100) / 100,
+        remainingAmount: Math.round(total * 0.8 * 100) / 100,
+        description: `Orçamento detalhado para o serviço solicitado. Inclui mão de obra e deslocamento.`,
+        estimatedTime: `${Math.floor(Math.random() * 3 + 1)} dia(s)`,
+        warrantyDays: 30,
+        status: req.status === 'completed' ? 'accepted' : req.status === 'scheduled' ? 'accepted' : 'sent',
+      });
+    }
+    console.log('  ✅ Orçamentos demo criados');
+  } else {
+    console.log(`  ⏭️  Orçamentos já existem (${existingQuotes} no banco)`);
   }
 }
 

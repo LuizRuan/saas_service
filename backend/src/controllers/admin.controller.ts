@@ -5,6 +5,11 @@ import { sendSuccess } from '../utils/response';
 import { DisputeStatus } from '../types';
 
 class AdminController {
+  async getStats(req: AuthenticatedRequest, res: Response): Promise<void> {
+    const result = await adminService.getStats();
+    sendSuccess(res, result);
+  }
+
   async getUsers(req: AuthenticatedRequest, res: Response): Promise<void> {
     const page = Number(req.query['page']) || 1;
     const limit = Number(req.query['limit']) || 20;
