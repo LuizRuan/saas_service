@@ -21,6 +21,8 @@ import { AvailableRequestsPage } from '@/pages/provider/AvailableRequestsPage';
 import { ProviderRequestDetailPage } from '@/pages/provider/ProviderRequestDetailPage';
 import { MyQuotesPage } from '@/pages/provider/MyQuotesPage';
 import { AdminDashboardPage } from '@/pages/admin/DashboardPage';
+import { AdminUsersPage } from '@/pages/admin/UsersPage';
+import { AdminProvidersPage } from '@/pages/admin/ProvidersPage';
 
 export function App() {
   return (
@@ -61,6 +63,8 @@ export function App() {
           <Route element={<ProtectedRoute roles={['admin']} />}>
             <Route element={<DashboardLayout />}>
               <Route path="/admin" element={<AdminDashboardPage />} />
+              <Route path="/admin/usuarios" element={<AdminUsersPage />} />
+              <Route path="/admin/prestadores" element={<AdminProvidersPage />} />
             </Route>
           </Route>
 
