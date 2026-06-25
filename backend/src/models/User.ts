@@ -74,7 +74,7 @@ const userSchema = new Schema<IUser>(
   }
 );
 
-userSchema.index({ email: 1 });
+// Nota: email não precisa de index() explícito — o unique: true já cria o índice
 userSchema.index({ role: 1, status: 1 });
 userSchema.index({ city: 1, state: 1 });
 

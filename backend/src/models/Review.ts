@@ -80,7 +80,7 @@ const reviewSchema = new Schema<IReview>(
   }
 );
 
-reviewSchema.index({ orderId: 1 });
+// Nota: orderId não precisa de index() explícito — o unique: true já cria o índice
 reviewSchema.index({ providerId: 1 });
 reviewSchema.index({ clientId: 1 });
 

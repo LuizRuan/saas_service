@@ -45,7 +45,7 @@ const categorySchema = new Schema<ICategory>(
   }
 );
 
-categorySchema.index({ slug: 1 });
+// Nota: slug não precisa de index() explícito — o unique: true já cria o índice
 categorySchema.index({ active: 1 });
 
 export const Category = mongoose.model<ICategory>('Category', categorySchema);

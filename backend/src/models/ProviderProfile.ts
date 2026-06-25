@@ -98,7 +98,7 @@ const providerProfileSchema = new Schema<IProviderProfile>(
   }
 );
 
-providerProfileSchema.index({ userId: 1 });
+// Nota: userId não precisa de index() explícito — o unique: true já cria o índice
 providerProfileSchema.index({ status: 1 });
 providerProfileSchema.index({ categories: 1 });
 providerProfileSchema.index({ cities: 1 });
