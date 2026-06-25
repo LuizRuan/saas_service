@@ -78,11 +78,8 @@ export async function runSeed(): Promise<void> {
     console.log(`  ⏭️  Admin já existe: ${adminEmail}`);
   }
 
-  // --- Seeds demo (apenas em ambiente de desenvolvimento/memória) ---
-  const isDev = process.env.NODE_ENV !== 'production';
-  if (isDev) {
-    await seedDemoUsers(categoryDocs);
-  }
+  // Seeds demo — criados em todos os ambientes para facilitar testes
+  await seedDemoUsers(categoryDocs);
 
   console.log('\n🎉 Seed concluído com sucesso!\n');
 }

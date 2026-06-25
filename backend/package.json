@@ -7,6 +7,7 @@
     "dev": "tsx watch src/server.ts",
     "dev:memory": "cross-env USE_MEMORY_DB=true tsx watch src/server.ts",
     "build": "tsc",
+    "render-build": "npm install --include=dev && tsc",
     "start": "node dist/server.js",
     "seed": "tsx src/seeds/seed.ts",
     "typecheck": "tsc --noEmit"
