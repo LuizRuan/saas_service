@@ -68,7 +68,7 @@ export function PublicLayout() {
             </nav>
 
             <div className="hidden md:flex items-center gap-3">
-              {user ? (
+              {user && (
                 <Button
                   variant="secondary"
                   size="sm"
@@ -77,24 +77,21 @@ export function PublicLayout() {
                 >
                   Meu painel
                 </Button>
-              ) : (
-                <>
-                  <Link
-                    to="/login"
-                    className="text-white/80 hover:text-white text-sm font-medium transition-colors px-3 py-2"
-                  >
-                    Entrar
-                  </Link>
-                  <Link to="/cadastro">
-                    <Button
-                      size="sm"
-                      className="bg-success hover:bg-success-dark text-white border-0 shadow-glow"
-                    >
-                      Cadastrar-se
-                    </Button>
-                  </Link>
-                </>
               )}
+              <Link
+                to="/login"
+                className="text-white/80 hover:text-white text-sm font-medium transition-colors px-3 py-2"
+              >
+                Entrar
+              </Link>
+              <Link to="/cadastro">
+                <Button
+                  size="sm"
+                  className="bg-success hover:bg-success-dark text-white border-0 shadow-glow"
+                >
+                  Cadastrar-se
+                </Button>
+              </Link>
             </div>
 
             {/* Mobile menu button */}
@@ -129,7 +126,7 @@ export function PublicLayout() {
                   </>
                 )}
                 <div className="pt-2 border-t border-white/10 space-y-2">
-                  {user ? (
+                  {user && (
                     <Button
                       variant="secondary"
                       size="sm"
@@ -138,20 +135,17 @@ export function PublicLayout() {
                     >
                       Meu painel
                     </Button>
-                  ) : (
-                    <>
-                      <Link to="/login" className="block">
-                        <Button variant="ghost" size="sm" className="w-full text-white hover:bg-white/10">
-                          Entrar
-                        </Button>
-                      </Link>
-                      <Link to="/cadastro" className="block">
-                        <Button size="sm" className="w-full bg-success hover:bg-success-dark text-white border-0">
-                          Cadastrar-se
-                        </Button>
-                      </Link>
-                    </>
                   )}
+                  <Link to="/login" className="block">
+                    <Button variant="ghost" size="sm" className="w-full text-white hover:bg-white/10">
+                      Entrar
+                    </Button>
+                  </Link>
+                  <Link to="/cadastro" className="block">
+                    <Button size="sm" className="w-full bg-success hover:bg-success-dark text-white border-0">
+                      Cadastrar-se
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </motion.div>
