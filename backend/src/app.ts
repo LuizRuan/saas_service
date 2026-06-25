@@ -10,10 +10,11 @@ import routes from './routes';
 
 const app = express();
 
-// Lista explícita de origens permitidas (não usar includes para evitar subdomínios maliciosos)
+// Lista explícita de origens permitidas
 const ALLOWED_ORIGINS = new Set([
   'http://localhost:5173',
   'http://localhost:3000',
+  'https://saas-service-kappa.vercel.app',
   env.FRONTEND_URL,
 ].filter(Boolean));
 
