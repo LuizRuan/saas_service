@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FileText, MapPin, Calendar, AlertCircle, CheckCircle2, Clock, XCircle, DollarSign } from 'lucide-react';
+import { FileText, MapPin, Calendar, AlertCircle, CheckCircle2, Clock, XCircle, DollarSign, ArrowRight } from 'lucide-react';
 import { quoteService } from '@/services/quote.service';
 import type { Quote, ServiceRequest } from '@/types';
 import { formatCurrency, formatDate } from '@/lib/utils';
@@ -35,6 +36,9 @@ export function MyQuotesPage() {
     typeof serviceRequestId === 'object'
       ? { description: serviceRequestId.description, city: serviceRequestId.city }
       : { description: '—', city: '—' };
+
+  const getRequestId = (serviceRequestId: string | ServiceRequest) =>
+    typeof serviceRequestId === 'object' ? serviceRequestId._id : serviceRequestId;
 
   return (
     <div className="relative max-w-4xl mx-auto">
@@ -133,6 +137,15 @@ export function MyQuotesPage() {
                       <DollarSign className="h-3 w-3" />Prazo estimado: {quote.estimatedTime}
                     </p>
                   )}
+
+                  <div className="mt-3 flex justify-end">
+                    <Link
+                      to={`/prestador/pedidos/${getRequestId(quote.serviceRequestId)}`}
+                      className="flex items-center gap-1 text-xs font-medium text-violet-400 hover:text-violet-300 transition-colors"
+                    >
+                      Ver solicitação <ArrowRight className="h-3 w-3" />
+                    </Link>
+                  </div>
                 </div>
               </motion.div>
             );

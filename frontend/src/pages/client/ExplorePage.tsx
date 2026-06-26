@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, MapPin, Star, Briefcase, Hammer, Zap, Paintbrush,
   Wrench, Scissors, Truck, Leaf, Monitor, Home, Wind, Droplets,
-  Shield, Filter, ChevronRight, Users, X, SlidersHorizontal,
+  Shield, Filter, ChevronRight, Users, X,
 } from 'lucide-react';
 import { categoryService } from '@/services/category.service';
 import { providerService, type ProviderCard } from '@/services/provider.service';
@@ -141,7 +141,6 @@ export function ExplorePage() {
   const [selectedCat, setSelectedCat] = useState('');
   const [loading, setLoading] = useState(false);
   const [catLoading, setCatLoading] = useState(true);
-  const [showFilters, setShowFilters] = useState(false);
 
   // Load categories once
   useEffect(() => {
@@ -222,17 +221,6 @@ export function ExplorePage() {
               )}
             </p>
           </div>
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="sm:ml-auto flex items-center gap-2 text-sm font-medium text-white/40 hover:text-white/80
-              border border-white/8 hover:border-white/20 rounded-xl px-4 py-2.5 transition-all"
-          >
-            <SlidersHorizontal className="h-4 w-4" />
-            Filtros
-            {hasFilters && (
-              <span className="h-2 w-2 rounded-full bg-emerald-400 ml-0.5" />
-            )}
-          </button>
         </div>
       </motion.div>
 

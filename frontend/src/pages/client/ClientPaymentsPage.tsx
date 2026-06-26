@@ -45,15 +45,15 @@ export function ClientPaymentsPage() {
       {/* Header */}
       <motion.div {...fadeUp(0)}>
         <div className="flex items-center gap-2 mb-2">
-          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-green-500/15 border border-green-500/20">
-            <CreditCard className="h-3.5 w-3.5 text-green-400" />
+          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-500/15 border border-emerald-500/20">
+            <CreditCard className="h-3.5 w-3.5 text-emerald-400" />
           </div>
-          <span className="text-xs font-semibold text-green-400/80 uppercase tracking-widest">Financeiro</span>
+          <span className="text-xs font-semibold text-emerald-400/80 uppercase tracking-widest">Financeiro</span>
         </div>
         <div className="flex items-end justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-white tracking-tight">
-              Meus <span className="bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-emerald-300">Pagamentos</span>
+              Meus <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-emerald-300">Pagamentos</span>
             </h1>
             <p className="text-slate-400 text-sm mt-1">Histórico de pagamentos simulados realizados.</p>
           </div>
@@ -148,7 +148,7 @@ interface CfgItem { label: string; cls: string }
 function PaymentCardContent({ p, typeCfg, statusCfg }: { p: Payment; typeCfg?: CfgItem; statusCfg?: CfgItem }) {
   return (
     <>
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-500/10 border border-white/5">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 border border-white/5">
         <CreditCard className="h-5 w-5 text-white/50" />
       </div>
       <div className="flex-1 min-w-0">

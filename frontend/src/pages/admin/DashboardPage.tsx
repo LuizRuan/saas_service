@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Users, Briefcase, FileText, ShieldAlert, BarChart3,
-  Clock, CheckCircle2, AlertTriangle, TrendingUp, Activity,
+  Clock, CheckCircle2, AlertTriangle, TrendingUp, Activity, AlertCircle,
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import api from '@/lib/axios';
@@ -35,11 +35,12 @@ interface Stats {
 export function AdminDashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
 
   useEffect(() => {
     api.get('/admin/stats')
       .then(res => setStats(res.data.data))
-      .catch(console.error)
+      .catch(() => setFetchError(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -65,6 +66,14 @@ export function AdminDashboardPage() {
     <div className="relative max-w-6xl mx-auto">
       <div className="orb w-80 h-80 bg-blue-600 -top-20 -right-20 opacity-10 pointer-events-none" />
       <div className="orb w-64 h-64 bg-violet-600 bottom-20 -left-20 opacity-8 pointer-events-none" />
+
+      {/* Error banner */}
+      {fetchError && (
+        <div className="mb-6 flex items-center gap-3 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3">
+          <AlertCircle className="h-5 w-5 text-amber-400 shrink-0" />
+          <p className="text-sm text-amber-300">Falha ao carregar estatísticas. Os dados exibidos podem estar incompletos.</p>
+        </div>
+      )}
 
       {/* Header */}
       <motion.div {...fadeUp(0)} className="mb-8">

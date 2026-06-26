@@ -75,7 +75,7 @@ export function AdminPaymentsPage() {
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-              <CreditCard className="h-6 w-6 text-green-400" /> Pagamentos
+              <CreditCard className="h-6 w-6 text-emerald-400" /> Pagamentos
             </h1>
             <p className="text-sm text-white/40 mt-1 max-w-xl">
               Acompanhe os pagamentos simulados da plataforma. Integrações reais com gateways serão adicionadas futuramente.
@@ -98,7 +98,7 @@ export function AdminPaymentsPage() {
       {/* Summary cards */}
       {!loading && !error && (
         <motion.div {...fadeUp(0.05)} className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          <SummaryCard icon={<DollarSign className="h-4 w-4 text-green-400" />} label="Total movimentado" value={formatCurrency(totalMovimentado)} />
+          <SummaryCard icon={<DollarSign className="h-4 w-4 text-emerald-400" />} label="Total movimentado" value={formatCurrency(totalMovimentado)} />
           <SummaryCard icon={<CheckCircle2 className="h-4 w-4 text-emerald-400" />} label="Pagamentos pagos" value={String(paid.length)} />
           <SummaryCard icon={<Clock className="h-4 w-4 text-amber-400" />} label="Pendentes" value={String(pending.length)} />
           <SummaryCard icon={<TrendingUp className="h-4 w-4 text-violet-400" />} label="Taxa plataforma" value={formatCurrency(totalTaxa)} />
@@ -140,7 +140,7 @@ export function AdminPaymentsPage() {
               className="flex items-center gap-4 rounded-2xl border border-white/5 p-4 hover:border-white/10 transition-all cursor-pointer"
               style={{ background: 'rgba(255,255,255,0.02)' }}
               onClick={() => setSelected(p)}>
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-white/5">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-500/20 border border-white/5">
                 <CreditCard className="h-5 w-5 text-white/50" />
               </div>
               <div className="flex-1 min-w-0">
@@ -194,7 +194,7 @@ export function AdminPaymentsPage() {
                 <X className="h-5 w-5" />
               </button>
               <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2 pr-8">
-                <CreditCard className="h-5 w-5 text-green-400" />
+                <CreditCard className="h-5 w-5 text-emerald-400" />
                 Pagamento #{selected._id.slice(-6).toUpperCase()}
               </h2>
 

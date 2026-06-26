@@ -37,6 +37,16 @@ const ACTION_CARDS = [
     title: 'Meus Orçamentos',
     desc: 'Acompanhe as propostas enviadas e seus status de aprovação.',
   },
+  {
+    to: '/prestador/ordens',
+    icon: ClipboardList,
+    gradient: 'from-orange-500/20 to-orange-600/10',
+    border: 'border-orange-500/20 hover:border-orange-400/40',
+    iconBg: 'from-orange-500 to-orange-600',
+    iconGlow: 'rgba(249,115,22,0.4)',
+    title: 'Minhas Ordens',
+    desc: 'Gerencie os serviços em andamento e concluídos.',
+  },
 ];
 
 export function ProviderDashboardPage() {
@@ -50,11 +60,13 @@ export function ProviderDashboardPage() {
     Promise.all([
       api.get('/providers/me', { signal: controller.signal }),
       api.get('/quotes', { signal: controller.signal }),
-    ]).then(([profileRes, quotesRes]) => {
+      api.get('/service-requests/available', { signal: controller.signal }),
+    ]).then(([profileRes, quotesRes, requestsRes]) => {
       const profile = profileRes.data.data;
       const quotes: any[] = quotesRes.data.data ?? [];
+      const requests: any[] = requestsRes.data.data ?? [];
       setStats({
-        availableRequests: 0,
+        availableRequests: requests.length,
         pendingQuotes: quotes.filter(q => q.status === 'sent').length,
         acceptedQuotes: quotes.filter(q => q.status === 'accepted').length,
         profileStatus: profile?.status ?? 'pending',
@@ -126,7 +138,7 @@ export function ProviderDashboardPage() {
       {/* ── Mini KPIs ──────────────────────────── */}
       <motion.div {...fadeUp(0.1)} className="grid grid-cols-3 gap-3 mb-8">
         {[
-          { icon: TrendingUp, label: 'Pedidos disponíveis', value: '—',                                                          color: 'text-blue-400'    },
+          { icon: TrendingUp, label: 'Pedidos disponíveis', value: stats ? String(stats.availableRequests) : '—',              color: 'text-blue-400'    },
           { icon: FileText,   label: 'Orçamentos enviados',  value: stats ? String(stats.pendingQuotes + stats.acceptedQuotes) : '—', color: 'text-violet-400'  },
           { icon: Users,      label: 'Orçamentos aceitos',   value: stats ? String(stats.acceptedQuotes) : '—',                   color: 'text-emerald-400' },
         ].map((s) => (
@@ -201,8 +213,7 @@ export function ProviderDashboardPage() {
 
         {/* Em breve */}
         {[
-          { icon: ClipboardList, title: 'Minhas Ordens', desc: 'Gerencie os serviços em andamento e concluídos.' },
-          { icon: Star,          title: 'Avaliações',    desc: 'Veja o que os clientes dizem sobre seu trabalho.' },
+          { icon: Star, title: 'Avaliações', desc: 'Veja o que os clientes dizem sobre seu trabalho.' },
         ].map((card, i) => (
           <motion.div key={card.title} {...fadeUp(0.36 + i * 0.08)}>
             <div className="relative flex flex-col rounded-2xl border border-white/5 p-6 opacity-35 cursor-not-allowed"

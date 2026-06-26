@@ -168,10 +168,12 @@ export function OrderDetailPage() {
           </motion.div>
 
           {/* Simulated payment warning */}
-          <motion.div {...fadeUp(0.05)} className="flex items-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3">
-            <AlertCircle className="h-4 w-4 text-amber-400 shrink-0" />
-            <p className="text-xs text-amber-300">Este pagamento é simulado e não representa uma transação financeira real.</p>
-          </motion.div>
+          {order.status !== 'completed' && (
+            <motion.div {...fadeUp(0.05)} className="flex items-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 p-3">
+              <AlertCircle className="h-4 w-4 text-amber-400 shrink-0" />
+              <p className="text-xs text-amber-300">Este pagamento é simulado e não representa uma transação financeira real.</p>
+            </motion.div>
+          )}
 
           {/* Action error */}
           {actionError && (

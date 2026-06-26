@@ -92,11 +92,15 @@ const FLOATING_CARDS = [
 
 export function LandingPage() {
   const [categories, setCategories] = useState<Category[]>([]);
+  const [catsLoading, setCatsLoading] = useState(true);
   const { user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    categoryService.getAll().then(setCategories).catch(() => {});
+    categoryService.getAll()
+      .then(setCategories)
+      .catch(() => {})
+      .finally(() => setCatsLoading(false));
   }, []);
 
   const handleClientCTA = () => {
@@ -302,7 +306,7 @@ export function LandingPage() {
       </section>
 
       {/* ── Categorias ── */}
-      {categories.length > 0 && (
+      {(catsLoading || categories.length > 0) && (
         <section id="categorias" className="py-24 bg-slate-50 relative">
           <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -314,25 +318,36 @@ export function LandingPage() {
               <p className="text-slate-500">Encontre profissionais especializados no que você precisa.</p>
             </AnimatedSection>
 
-            <StaggerContainer className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4" staggerDelay={0.08}>
-              {categories.map((cat) => {
-                const Icon = getCategoryIcon(cat.slug);
-                return (
-                  <StaggerItem key={cat._id}>
-                    <motion.div
-                      whileHover={{ y: -4, scale: 1.02 }}
-                      transition={{ type: 'spring', stiffness: 400, damping: 17 }}
-                      className="flex flex-col items-center gap-4 rounded-2xl border border-slate-100 bg-white p-6 shadow-card hover:shadow-card-hover cursor-pointer group transition-colors"
-                    >
-                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-50 group-hover:bg-primary/10 transition-colors">
-                        <Icon className="h-7 w-7 text-primary" />
-                      </div>
-                      <span className="text-sm font-semibold text-slate-700 text-center">{cat.name}</span>
-                    </motion.div>
-                  </StaggerItem>
-                );
-              })}
-            </StaggerContainer>
+            {catsLoading ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="flex flex-col items-center gap-4 rounded-2xl border border-slate-100 bg-white p-6 animate-pulse">
+                    <div className="h-14 w-14 rounded-2xl bg-slate-100" />
+                    <div className="h-4 w-16 rounded bg-slate-100" />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <StaggerContainer className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4" staggerDelay={0.08}>
+                {categories.map((cat) => {
+                  const Icon = getCategoryIcon(cat.slug);
+                  return (
+                    <StaggerItem key={cat._id}>
+                      <motion.div
+                        whileHover={{ y: -4, scale: 1.02 }}
+                        transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                        className="flex flex-col items-center gap-4 rounded-2xl border border-slate-100 bg-white p-6 shadow-card hover:shadow-card-hover cursor-pointer group transition-colors"
+                      >
+                        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-50 group-hover:bg-primary/10 transition-colors">
+                          <Icon className="h-7 w-7 text-primary" />
+                        </div>
+                        <span className="text-sm font-semibold text-slate-700 text-center">{cat.name}</span>
+                      </motion.div>
+                    </StaggerItem>
+                  );
+                })}
+              </StaggerContainer>
+            )}
           </div>
         </section>
       )}

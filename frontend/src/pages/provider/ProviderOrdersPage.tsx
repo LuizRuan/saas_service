@@ -50,7 +50,7 @@ export function ProviderOrdersPage() {
       </motion.div>
 
       {/* Error */}
-      {error && (
+      {!loading && error && (
         <div className="flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-4">
           <AlertCircle className="h-5 w-5 text-red-400 shrink-0" />
           <p className="text-sm text-red-300">{error}</p>

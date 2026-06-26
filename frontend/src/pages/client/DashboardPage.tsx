@@ -1,6 +1,8 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
+import api from '@/lib/axios';
 import {
   FileText, ClipboardList, CreditCard, Plus,
   Compass, ArrowRight, Sparkles, Star, TrendingUp,
@@ -49,15 +51,31 @@ const ACTION_CARDS = [
   },
 ];
 
-const STATS = [
-  { icon: TrendingUp, label: 'Solicitações', value: '—', color: 'text-blue-400' },
-  { icon: Star, label: 'Avaliação média', value: '—', color: 'text-amber-400' },
-  { icon: ClipboardList, label: 'Ordens ativas', value: '—', color: 'text-violet-400' },
-];
-
 export function ClientDashboardPage() {
   const { user } = useAuth();
   const firstName = user?.name?.split(' ')[0] ?? 'usuário';
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [requestCount, setRequestCount] = useState<number | null>(null);
+  const [orderCount, setOrderCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    Promise.all([
+      api.get('/service-requests/my', { signal: controller.signal }),
+      api.get('/orders', { signal: controller.signal }),
+    ]).then(([reqRes, ordersRes]) => {
+      const requests: any[] = reqRes.data.data ?? [];
+      const orders: any[] = ordersRes.data.data ?? [];
+      setRequestCount(requests.length);
+      setOrderCount(orders.filter((o: any) => o.status !== 'completed' && o.status !== 'cancelled').length);
+    }).catch(() => {
+      setRequestCount(0);
+      setOrderCount(0);
+    }).finally(() => {
+      setStatsLoading(false);
+    });
+    return () => controller.abort();
+  }, []);
 
   return (
     <div className="relative max-w-5xl mx-auto">
@@ -86,13 +104,29 @@ export function ClientDashboardPage() {
 
       {/* ── Mini stats ──────────────────────────── */}
       <motion.div {...fadeUp(0.08)} className="flex flex-wrap gap-4 mb-8">
-        {STATS.map((s) => (
-          <div key={s.label} className="flex items-center gap-2.5 rounded-xl border border-white/8 bg-white/3 px-4 py-2.5">
-            <s.icon className={`h-4 w-4 ${s.color}`} />
-            <span className="text-white/50 text-xs">{s.label}:</span>
-            <span className="text-white font-semibold text-sm">{s.value}</span>
-          </div>
-        ))}
+        <div className="flex items-center gap-2.5 rounded-xl border border-white/8 bg-white/3 px-4 py-2.5">
+          <TrendingUp className="h-4 w-4 text-blue-400" />
+          <span className="text-white/50 text-xs">Solicitações:</span>
+          {statsLoading ? (
+            <span className="inline-block h-3 w-5 rounded bg-white/15 animate-pulse" />
+          ) : (
+            <span className="text-white font-semibold text-sm">{requestCount ?? '—'}</span>
+          )}
+        </div>
+        <div className="flex items-center gap-2.5 rounded-xl border border-white/8 bg-white/3 px-4 py-2.5">
+          <Star className="h-4 w-4 text-amber-400" />
+          <span className="text-white/50 text-xs">Avaliação média:</span>
+          <span className="text-white font-semibold text-sm">—</span>
+        </div>
+        <div className="flex items-center gap-2.5 rounded-xl border border-white/8 bg-white/3 px-4 py-2.5">
+          <ClipboardList className="h-4 w-4 text-violet-400" />
+          <span className="text-white/50 text-xs">Ordens ativas:</span>
+          {statsLoading ? (
+            <span className="inline-block h-3 w-5 rounded bg-white/15 animate-pulse" />
+          ) : (
+            <span className="text-white font-semibold text-sm">{orderCount ?? '—'}</span>
+          )}
+        </div>
       </motion.div>
 
       {/* ── CTA Principal ───────────────────────── */}
