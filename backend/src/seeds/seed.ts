@@ -80,7 +80,7 @@ export async function runSeed(): Promise<void> {
   }
 
   // Seeds demo — NUNCA em produção (contas com senha pública)
-  if (env.NODE_ENV !== 'production') {
+  if (env.SEED_DEMO_DATA) {
     await seedDemoUsers(categoryDocs);
   }
 

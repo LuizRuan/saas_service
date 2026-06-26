@@ -16,13 +16,21 @@ import { MyRequestsPage } from '@/pages/client/MyRequestsPage';
 import { NewRequestPage } from '@/pages/client/NewRequestPage';
 import { RequestDetailPage } from '@/pages/client/RequestDetailPage';
 import { MyOrdersPage } from '@/pages/client/MyOrdersPage';
+import { OrderDetailPage } from '@/pages/client/OrderDetailPage';
+import { ClientPaymentsPage } from '@/pages/client/ClientPaymentsPage';
 import { ProviderDashboardPage } from '@/pages/provider/DashboardPage';
 import { AvailableRequestsPage } from '@/pages/provider/AvailableRequestsPage';
 import { ProviderRequestDetailPage } from '@/pages/provider/ProviderRequestDetailPage';
 import { MyQuotesPage } from '@/pages/provider/MyQuotesPage';
+import { ProviderOrdersPage } from '@/pages/provider/ProviderOrdersPage';
+import { ProviderOrderDetailPage } from '@/pages/provider/ProviderOrderDetailPage';
 import { AdminDashboardPage } from '@/pages/admin/DashboardPage';
 import { AdminUsersPage } from '@/pages/admin/UsersPage';
 import { AdminProvidersPage } from '@/pages/admin/ProvidersPage';
+import { AdminServiceRequestsPage } from '@/pages/admin/ServiceRequestsPage';
+import { AdminOrdersPage } from '@/pages/admin/OrdersPage';
+import { AdminDisputasPage } from '@/pages/admin/DisputasPage';
+import { AdminPaymentsPage } from '@/pages/admin/PaymentsPage';
 
 export function App() {
   return (
@@ -46,6 +54,8 @@ export function App() {
               <Route path="/cliente/solicitacoes/nova" element={<NewRequestPage />} />
               <Route path="/cliente/solicitacoes/:id" element={<RequestDetailPage />} />
               <Route path="/cliente/ordens" element={<MyOrdersPage />} />
+              <Route path="/cliente/ordens/:id" element={<OrderDetailPage />} />
+              <Route path="/cliente/pagamentos" element={<ClientPaymentsPage />} />
             </Route>
           </Route>
 
@@ -56,6 +66,8 @@ export function App() {
               <Route path="/prestador/pedidos" element={<AvailableRequestsPage />} />
               <Route path="/prestador/pedidos/:id" element={<ProviderRequestDetailPage />} />
               <Route path="/prestador/orcamentos" element={<MyQuotesPage />} />
+              <Route path="/prestador/ordens" element={<ProviderOrdersPage />} />
+              <Route path="/prestador/ordens/:id" element={<ProviderOrderDetailPage />} />
             </Route>
           </Route>
 
@@ -65,6 +77,10 @@ export function App() {
               <Route path="/admin" element={<AdminDashboardPage />} />
               <Route path="/admin/usuarios" element={<AdminUsersPage />} />
               <Route path="/admin/prestadores" element={<AdminProvidersPage />} />
+              <Route path="/admin/solicitacoes" element={<AdminServiceRequestsPage />} />
+              <Route path="/admin/ordens" element={<AdminOrdersPage />} />
+              <Route path="/admin/disputas" element={<AdminDisputasPage />} />
+              <Route path="/admin/pagamentos" element={<AdminPaymentsPage />} />
             </Route>
           </Route>
 

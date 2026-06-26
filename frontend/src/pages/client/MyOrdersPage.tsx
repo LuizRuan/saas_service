@@ -125,7 +125,7 @@ export function MyOrdersPage() {
             return (
               <motion.div key={order._id} {...fadeUp(i)}>
                 <Link
-                  to={`/cliente/solicitacoes/${typeof order.serviceRequestId === 'object' ? (order.serviceRequestId as any)?._id : order.serviceRequestId}`}
+                  to={`/cliente/ordens/${order._id}`}
                   className="group block rounded-2xl border border-white/8 p-5 transition-all duration-300
                     hover:border-white/15 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/20"
                   style={{ background: 'rgba(255,255,255,0.03)' }}

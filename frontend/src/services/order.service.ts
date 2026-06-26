@@ -11,4 +11,14 @@ export const orderService = {
     const res = await api.get<ApiResponse<Order>>(`/orders/${id}`);
     return res.data.data;
   },
+
+  async updateStatus(id: string, status: string): Promise<Order> {
+    const res = await api.patch<ApiResponse<Order>>(`/orders/${id}/status`, { status });
+    return res.data.data;
+  },
+
+  async approveCompletion(id: string): Promise<Order> {
+    const res = await api.patch<ApiResponse<Order>>(`/orders/${id}/approve-completion`);
+    return res.data.data;
+  },
 };

@@ -15,6 +15,7 @@ export const env = {
   NODE_ENV: nodeEnv,
   MONGODB_URI: process.env.MONGODB_URI || '',
   USE_MEMORY_DB: process.env.USE_MEMORY_DB === 'true',
+  SEED_DEMO_DATA: process.env.SEED_DEMO_DATA === 'true',
   JWT_SECRET: process.env.JWT_SECRET || 'dev_secret_insecure_do_not_use_in_production',
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
   ADMIN_EMAIL: process.env.ADMIN_EMAIL || 'admin@maocerta.com',

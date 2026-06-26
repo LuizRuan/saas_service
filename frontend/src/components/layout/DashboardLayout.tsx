@@ -27,7 +27,7 @@ function useNavItems() {
       { label: 'Minhas Solicitações', to: '/cliente/solicitacoes', icon: <FileText className="h-4 w-4" /> },
       { label: 'Explorar categorias', to: '/cliente/explorar', icon: <Compass className="h-4 w-4" /> },
       { label: 'Ordens', to: '/cliente/ordens', icon: <ClipboardList className="h-4 w-4" /> },
-      { label: 'Pagamentos', to: '/cliente/pagamentos', icon: <CreditCard className="h-4 w-4" />, disabled: true },
+      { label: 'Pagamentos', to: '/cliente/pagamentos', icon: <CreditCard className="h-4 w-4" /> },
       { label: 'Avaliações', to: '/cliente/avaliacoes', icon: <Star className="h-4 w-4" />, disabled: true },
     ] as NavItem[];
   }
@@ -36,7 +36,7 @@ function useNavItems() {
       { label: 'Início', to: '/prestador', icon: <Home className="h-4 w-4" /> },
       { label: 'Pedidos disponíveis', to: '/prestador/pedidos', icon: <Search className="h-4 w-4" /> },
       { label: 'Meus orçamentos', to: '/prestador/orcamentos', icon: <FileText className="h-4 w-4" /> },
-      { label: 'Ordens', to: '/prestador/ordens', icon: <ClipboardList className="h-4 w-4" />, disabled: true },
+      { label: 'Ordens', to: '/prestador/ordens', icon: <ClipboardList className="h-4 w-4" /> },
       { label: 'Avaliações', to: '/prestador/avaliacoes', icon: <Star className="h-4 w-4" />, disabled: true },
     ] as NavItem[];
   }
@@ -44,10 +44,10 @@ function useNavItems() {
     { label: 'Início', to: '/admin', icon: <Home className="h-4 w-4" /> },
     { label: 'Usuários', to: '/admin/usuarios', icon: <Users className="h-4 w-4" /> },
     { label: 'Prestadores', to: '/admin/prestadores', icon: <Briefcase className="h-4 w-4" /> },
-    { label: 'Solicitações', to: '/admin/solicitacoes', icon: <FileText className="h-4 w-4" />, disabled: true },
-    { label: 'Ordens', to: '/admin/ordens', icon: <ClipboardList className="h-4 w-4" />, disabled: true },
-    { label: 'Pagamentos', to: '/admin/pagamentos', icon: <CreditCard className="h-4 w-4" />, disabled: true },
-    { label: 'Disputas', to: '/admin/disputas', icon: <ShieldAlert className="h-4 w-4" />, disabled: true },
+    { label: 'Solicitações', to: '/admin/solicitacoes', icon: <FileText className="h-4 w-4" /> },
+    { label: 'Ordens', to: '/admin/ordens', icon: <ClipboardList className="h-4 w-4" /> },
+    { label: 'Pagamentos', to: '/admin/pagamentos', icon: <CreditCard className="h-4 w-4" /> },
+    { label: 'Disputas', to: '/admin/disputas', icon: <ShieldAlert className="h-4 w-4" /> },
   ] as NavItem[];
 }
 
