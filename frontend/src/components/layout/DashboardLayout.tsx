@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
@@ -9,6 +9,8 @@ import {
   Wrench, Search, Plus, Compass, Bell, ChevronRight,
   Zap,
 } from 'lucide-react';
+import { NotificationsModal } from '@/components/shared/NotificationsModal';
+import { buildNotifications } from '@/services/notification.service';
 
 interface NavItem {
   label: string;
@@ -175,7 +177,16 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
 
 export function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [notifCount, setNotifCount] = useState(0);
   const { user } = useAuth();
+
+  useEffect(() => {
+    if (!user) return;
+    buildNotifications(user.role)
+      .then(list => setNotifCount(list.length))
+      .catch(() => {});
+  }, [user]);
 
   const roleLabels: Record<string, string> = {
     client: 'Área do Cliente',
@@ -233,9 +244,17 @@ export function DashboardLayout() {
 
           <div className="flex items-center gap-2">
             {/* Notifications */}
-            <button className="relative p-2.5 rounded-xl text-white/30 hover:text-white hover:bg-white/5 transition-all">
-              <Bell className="h-4.5 w-4.5 h-5 w-5" />
-              <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-emerald-400 ring-2 ring-slate-950 animate-pulse" />
+            <button
+              onClick={() => setNotificationsOpen(true)}
+              className="relative p-2.5 rounded-xl text-white/30 hover:text-white hover:bg-white/5 transition-all"
+            >
+              <Bell className="h-5 w-5" />
+              {notifCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center
+                  rounded-full bg-emerald-500 text-[10px] font-bold text-white px-1 ring-2 ring-slate-950">
+                  {notifCount > 99 ? '99+' : notifCount}
+                </span>
+              )}
             </button>
 
             <div className="h-6 w-px bg-white/8" />
@@ -253,6 +272,12 @@ export function DashboardLayout() {
             </div>
           </div>
         </header>
+
+        <NotificationsModal
+          open={notificationsOpen}
+          onClose={() => setNotificationsOpen(false)}
+          onLoaded={setNotifCount}
+        />
 
         {/* Page content */}
         <main className="flex-1 overflow-y-auto scrollbar-thin" style={{ background: 'linear-gradient(135deg, #0a0f1e 0%, #0d1530 60%, #080e1c 100%)' }}>
