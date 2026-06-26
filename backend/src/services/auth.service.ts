@@ -177,9 +177,33 @@ class AuthService {
       throw new UnauthorizedError('E-mail ou senha incorretos');
     }
 
+    // Verifica se está excluído (mesma mensagem de credenciais para não revelar)
+    if (user.status === 'deleted') {
+      throw new UnauthorizedError('E-mail ou senha incorretos');
+    }
+
     // Verifica se está bloqueado
     if (user.status === 'blocked') {
-      throw new UnauthorizedError('Sua conta está bloqueada. Entre em contato com o suporte.');
+      if (user.blockedUntil && user.blockedUntil <= new Date()) {
+        // Bloqueio expirado — reativar automaticamente
+        await User.findByIdAndUpdate(user._id, {
+          $set: { status: 'active' },
+          $unset: { blockedUntil: 1, blockedReason: 1, blockedBy: 1 },
+        });
+        user.status = 'active';
+      } else {
+        const until = user.blockedUntil
+          ? user.blockedUntil.toLocaleString('pt-BR', {
+              day: '2-digit', month: '2-digit', year: 'numeric',
+              hour: '2-digit', minute: '2-digit',
+            })
+          : null;
+        throw new UnauthorizedError(
+          until
+            ? `Sua conta está bloqueada até ${until}. Entre em contato com o suporte.`
+            : 'Sua conta está bloqueada. Entre em contato com o suporte.'
+        );
+      }
     }
 
     // Verifica senha
@@ -216,6 +240,18 @@ class AuthService {
     const user = await User.findById(userId);
     if (!user) {
       throw new NotFoundError('Usuário');
+    }
+
+    if (user.status === 'deleted') {
+      throw new NotFoundError('Usuário');
+    }
+
+    if (user.status === 'blocked' && user.blockedUntil && user.blockedUntil <= new Date()) {
+      await User.findByIdAndUpdate(userId, {
+        $set: { status: 'active' },
+        $unset: { blockedUntil: 1, blockedReason: 1, blockedBy: 1 },
+      });
+      user.status = 'active';
     }
 
     let profile = null;

@@ -6,6 +6,9 @@ import { Payment } from '../models/Payment';
 import { Dispute } from '../models/Dispute';
 import { NotFoundError } from '../utils/errors';
 import { DisputeStatus } from '../types';
+import { AuditLog } from '../models/AuditLog';
+import { AppError } from '../utils/errors';
+import mongoose from 'mongoose';
 
 class AdminService {
   async getStats() {
@@ -73,10 +76,11 @@ class AdminService {
   }
 
   async getUsers(page = 1, limit = 20) {
+    const filter = { status: { $ne: 'deleted' as const } };
     const skip = (page - 1) * limit;
     const [users, total] = await Promise.all([
-      User.find().sort({ createdAt: -1 }).skip(skip).limit(limit),
-      User.countDocuments(),
+      User.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit),
+      User.countDocuments(filter),
     ]);
     return { users, total, page, limit };
   }
@@ -109,6 +113,142 @@ class AdminService {
     profile.status = 'blocked';
     await profile.save();
     return profile;
+  }
+
+  async blockUser(targetId: string, adminId: string, durationDays: number, reason?: string) {
+    if (targetId === adminId) {
+      throw new AppError('Voce nao pode bloquear sua propria conta', 400);
+    }
+
+    const target = await User.findById(targetId);
+    if (!target) throw new NotFoundError('Usuario');
+    if (target.status === 'deleted') {
+      throw new AppError('Usuario excluido nao pode ser bloqueado', 400);
+    }
+
+    if (target.role === 'admin') {
+      const remainingActiveAdmins = await User.countDocuments({
+        role: 'admin',
+        status: 'active',
+        _id: { $ne: new mongoose.Types.ObjectId(targetId) },
+      });
+      if (remainingActiveAdmins === 0) {
+        throw new AppError('Nao e possivel bloquear o ultimo administrador ativo', 400);
+      }
+    }
+
+    const previousStatus = target.status as string;
+    const blockedUntil = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000);
+
+    await User.findByIdAndUpdate(targetId, {
+      $set: {
+        status: 'blocked',
+        blockedUntil,
+        blockedReason: reason ?? null,
+        blockedBy: new mongoose.Types.ObjectId(adminId),
+      },
+    });
+
+    const admin = await User.findById(adminId).select('name');
+
+    await AuditLog.create({
+      targetUserId:   new mongoose.Types.ObjectId(targetId),
+      targetUserName: target.name,
+      adminId:        new mongoose.Types.ObjectId(adminId),
+      adminName:      admin?.name ?? 'Desconhecido',
+      action:         'block_user',
+      reason:         reason ?? undefined,
+      blockedUntil,
+      previousStatus,
+      newStatus: 'blocked',
+    });
+
+    return await User.findById(targetId);
+  }
+
+  async unblockUser(targetId: string, adminId: string) {
+    const target = await User.findById(targetId);
+    if (!target) throw new NotFoundError('Usuario');
+    if (target.status === 'deleted') {
+      throw new AppError('Usuario excluido nao pode ser desbloqueado', 400);
+    }
+
+    const previousStatus = target.status as string;
+
+    await User.findByIdAndUpdate(targetId, {
+      $set: { status: 'active' },
+      $unset: { blockedUntil: 1, blockedReason: 1, blockedBy: 1 },
+    });
+
+    const admin = await User.findById(adminId).select('name');
+
+    await AuditLog.create({
+      targetUserId:   new mongoose.Types.ObjectId(targetId),
+      targetUserName: target.name,
+      adminId:        new mongoose.Types.ObjectId(adminId),
+      adminName:      admin?.name ?? 'Desconhecido',
+      action:         'unblock_user',
+      previousStatus,
+      newStatus: 'active',
+    });
+
+    return await User.findById(targetId);
+  }
+
+  async deleteUser(targetId: string, adminId: string) {
+    if (targetId === adminId) {
+      throw new AppError('Voce nao pode excluir sua propria conta', 400);
+    }
+
+    const target = await User.findById(targetId);
+    if (!target) throw new NotFoundError('Usuario');
+    if (target.status === 'deleted') {
+      throw new AppError('Usuario ja foi excluido', 400);
+    }
+
+    if (target.role === 'admin') {
+      const remainingAdmins = await User.countDocuments({
+        role: 'admin',
+        status: { $in: ['active', 'blocked'] },
+        _id: { $ne: new mongoose.Types.ObjectId(targetId) },
+      });
+      if (remainingAdmins === 0) {
+        throw new AppError('Nao e possivel excluir o unico administrador restante', 400);
+      }
+    }
+
+    const previousStatus = target.status as string;
+
+    await User.findByIdAndUpdate(targetId, {
+      $set: {
+        status:    'deleted',
+        deletedAt: new Date(),
+        deletedBy: new mongoose.Types.ObjectId(adminId),
+      },
+    });
+
+    const admin = await User.findById(adminId).select('name');
+
+    await AuditLog.create({
+      targetUserId:   new mongoose.Types.ObjectId(targetId),
+      targetUserName: target.name,
+      adminId:        new mongoose.Types.ObjectId(adminId),
+      adminName:      admin?.name ?? 'Desconhecido',
+      action:         'delete_user',
+      previousStatus,
+      newStatus: 'deleted',
+    });
+
+    return { success: true };
+  }
+
+  async getUserHistory(targetId: string) {
+    const logs = await AuditLog.find({
+      targetUserId: new mongoose.Types.ObjectId(targetId),
+    })
+      .sort({ createdAt: -1 })
+      .limit(50);
+    return logs;
   }
 
   async getServiceRequests(page = 1, limit = 20) {

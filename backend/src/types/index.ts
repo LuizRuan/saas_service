@@ -4,7 +4,7 @@ import { Request } from 'express';
 export type UserRole = 'client' | 'provider' | 'admin';
 
 // Status do usuário
-export type UserStatus = 'active' | 'blocked';
+export type UserStatus = 'active' | 'blocked' | 'deleted';
 
 // Status do prestador
 export type ProviderStatus = 'pending' | 'approved' | 'blocked';

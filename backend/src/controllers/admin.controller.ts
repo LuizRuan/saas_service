@@ -34,6 +34,34 @@ class AdminController {
     sendSuccess(res, profile, 'Prestador bloqueado com sucesso!');
   }
 
+  async blockUser(req: AuthenticatedRequest, res: Response): Promise<void> {
+    const id = String(req.params['id']);
+    const adminId = String(req.user!.userId);
+    const { durationDays, reason } = req.body;
+    const user = await adminService.blockUser(id, adminId, Number(durationDays), reason as string | undefined);
+    sendSuccess(res, user, 'Usuario bloqueado com sucesso!');
+  }
+
+  async unblockUser(req: AuthenticatedRequest, res: Response): Promise<void> {
+    const id = String(req.params['id']);
+    const adminId = String(req.user!.userId);
+    const user = await adminService.unblockUser(id, adminId);
+    sendSuccess(res, user, 'Usuario desbloqueado com sucesso!');
+  }
+
+  async deleteUser(req: AuthenticatedRequest, res: Response): Promise<void> {
+    const id = String(req.params['id']);
+    const adminId = String(req.user!.userId);
+    const result = await adminService.deleteUser(id, adminId);
+    sendSuccess(res, result, 'Usuario excluido com sucesso!');
+  }
+
+  async getUserHistory(req: AuthenticatedRequest, res: Response): Promise<void> {
+    const id = String(req.params['id']);
+    const logs = await adminService.getUserHistory(id);
+    sendSuccess(res, logs);
+  }
+
   async getServiceRequests(req: AuthenticatedRequest, res: Response): Promise<void> {
     const { page, limit } = parsePagination(req.query);
     const result = await adminService.getServiceRequests(page, limit);

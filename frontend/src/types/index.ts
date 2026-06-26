@@ -1,5 +1,5 @@
 export type UserRole = 'client' | 'provider' | 'admin';
-export type UserStatus = 'active' | 'blocked';
+export type UserStatus = 'active' | 'blocked' | 'deleted';
 export type ProviderStatus = 'pending' | 'approved' | 'blocked';
 
 export interface User {

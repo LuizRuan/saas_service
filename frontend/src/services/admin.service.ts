@@ -5,7 +5,9 @@ export interface AdminUser {
   name: string;
   email: string;
   role: 'client' | 'provider' | 'admin';
-  status: 'active' | 'blocked';
+  status: 'active' | 'blocked' | 'deleted';
+  blockedUntil?: string;
+  blockedReason?: string;
   city?: string;
   state?: string;
   phone?: string;
@@ -88,6 +90,20 @@ export interface AdminPayment {
   createdAt: string;
 }
 
+export interface AuditLogEntry {
+  _id: string;
+  targetUserId: string;
+  targetUserName: string;
+  adminId: string;
+  adminName: string;
+  action: 'block_user' | 'unblock_user' | 'delete_user';
+  reason?: string;
+  blockedUntil?: string;
+  previousStatus: string;
+  newStatus: string;
+  createdAt: string;
+}
+
 async function getUsers(limit = 100) {
   const res = await api.get(`/admin/users?limit=${limit}`);
   const d = res.data.data;
@@ -139,6 +155,26 @@ async function getPayments(limit = 200) {
   return { payments: (d.payments ?? d ?? []) as AdminPayment[], total: (d.total ?? 0) as number };
 }
 
+async function blockUser(id: string, durationDays: number, reason?: string) {
+  const res = await api.patch(`/admin/users/${id}/block`, { durationDays, reason });
+  return res.data.data as AdminUser;
+}
+
+async function unblockUser(id: string) {
+  const res = await api.patch(`/admin/users/${id}/unblock`);
+  return res.data.data as AdminUser;
+}
+
+async function deleteUser(id: string) {
+  const res = await api.delete(`/admin/users/${id}`);
+  return res.data as { success: boolean; message?: string };
+}
+
+async function getUserHistory(id: string) {
+  const res = await api.get(`/admin/users/${id}/history`);
+  return res.data.data as AuditLogEntry[];
+}
+
 export const adminService = {
   getUsers,
   getProviders,
@@ -149,4 +185,8 @@ export const adminService = {
   getDisputes,
   updateDisputeStatus,
   getPayments,
+  blockUser,
+  unblockUser,
+  deleteUser,
+  getUserHistory,
 };

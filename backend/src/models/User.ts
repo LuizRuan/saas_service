@@ -10,6 +10,11 @@ export interface IUser extends Document {
   city: string;
   state: string;
   status: UserStatus;
+  blockedUntil?: Date;
+  blockedReason?: string;
+  blockedBy?: mongoose.Types.ObjectId;
+  deletedAt?: Date;
+  deletedBy?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -62,9 +67,14 @@ const userSchema = new Schema<IUser>(
     },
     status: {
       type: String,
-      enum: ['active', 'blocked'],
+      enum: ['active', 'blocked', 'deleted'],
       default: 'active',
     },
+    blockedUntil:  { type: Date },
+    blockedReason: { type: String },
+    blockedBy:     { type: Schema.Types.ObjectId, ref: 'User' },
+    deletedAt:     { type: Date },
+    deletedBy:     { type: Schema.Types.ObjectId, ref: 'User' },
   },
   {
     timestamps: true,
