@@ -37,20 +37,6 @@ const DURATION_OPTIONS = [
   { value: 90, label: '90 dias' },
 ];
 
-// ── Backdrop ──────────────────────────────────────────────────────────────────
-
-function Backdrop({ onClose }: { onClose: () => void }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40"
-      onClick={onClose}
-    />
-  );
-}
-
 // ── BlockModal ────────────────────────────────────────────────────────────────
 
 function BlockModal({
@@ -81,15 +67,21 @@ function BlockModal({
   }
 
   return (
-    <>
-      <Backdrop onClose={onClose} />
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      onClick={onClose}
+    >
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 16 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 16 }}
         transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-        className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-white/10 p-6 shadow-2xl"
+        className="w-full max-w-md rounded-2xl border border-white/10 p-6 shadow-2xl"
         style={{ background: 'linear-gradient(135deg, #0d1530 0%, #0a0f1e 100%)' }}
+        onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2">
@@ -167,7 +159,7 @@ function BlockModal({
           </div>
         </div>
       </motion.div>
-    </>
+    </motion.div>
   );
 }
 
@@ -200,15 +192,21 @@ function DeleteModal({
   }
 
   return (
-    <>
-      <Backdrop onClose={onClose} />
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      onClick={onClose}
+    >
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 16 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 16 }}
         transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-        className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-red-500/20 p-6 shadow-2xl"
+        className="w-full max-w-md rounded-2xl border border-red-500/20 p-6 shadow-2xl"
         style={{ background: 'linear-gradient(135deg, #0d1530 0%, #0a0f1e 100%)' }}
+        onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2">
@@ -265,7 +263,7 @@ function DeleteModal({
           </button>
         </div>
       </motion.div>
-    </>
+    </motion.div>
   );
 }
 
@@ -290,18 +288,24 @@ function HistoryModal({
   }, [user._id]);
 
   return (
-    <>
-      <Backdrop onClose={onClose} />
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      onClick={onClose}
+    >
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 16 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 16 }}
         transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-        className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-white/10 p-6 shadow-2xl flex flex-col"
+        className="w-full max-w-lg rounded-2xl border border-white/10 p-6 shadow-2xl flex flex-col"
         style={{
           background: 'linear-gradient(135deg, #0d1530 0%, #0a0f1e 100%)',
           maxHeight: '80vh',
         }}
+        onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4 shrink-0">
           <div className="flex items-center gap-2">
@@ -383,7 +387,7 @@ function HistoryModal({
           })}
         </div>
       </motion.div>
-    </>
+    </motion.div>
   );
 }
 

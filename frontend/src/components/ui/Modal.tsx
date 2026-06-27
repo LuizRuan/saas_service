@@ -1,59 +1,64 @@
 import { useEffect, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
-import { cn } from '@/lib/utils';
+
+const SIZE_CLASS: Record<string, string> = {
+  sm: 'max-w-sm',
+  md: 'max-w-md',
+  lg: 'max-w-lg',
+  xl: 'max-w-xl',
+};
 
 interface ModalProps {
-  isOpen: boolean;
+  open: boolean;
   onClose: () => void;
   title?: string;
+  description?: string;
   children: ReactNode;
-  className?: string;
+  size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
-export function Modal({ isOpen, onClose, title, children, className }: ModalProps) {
+export function Modal({ open, onClose, title, description, children, size = 'md' }: ModalProps) {
   useEffect(() => {
-    if (!isOpen) return;
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', handler);
     document.body.style.overflow = 'hidden';
     return () => {
       document.removeEventListener('keydown', handler);
       document.body.style.overflow = '';
     };
-  }, [isOpen, onClose]);
+  }, [open, onClose]);
 
   return (
     <AnimatePresence>
-      {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {open && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+          onClick={onClose}
+        >
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={onClose}
-            aria-hidden
-          />
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            initial={{ opacity: 0, scale: 0.96, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-            className={cn(
-              'relative w-full max-w-lg rounded-2xl bg-white shadow-premium',
-              className
-            )}
+            exit={{ opacity: 0, scale: 0.96, y: 16 }}
+            transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+            className={`relative w-full ${SIZE_CLASS[size]} rounded-2xl border border-white/10 shadow-2xl overflow-hidden`}
+            style={{ background: 'linear-gradient(135deg, #0d1530 0%, #0a0f1e 100%)' }}
+            onClick={e => e.stopPropagation()}
           >
-            {title && (
-              <div className="flex items-center justify-between border-b border-slate-100 px-6 py-4">
-                <h2 className="text-base font-semibold text-slate-800">{title}</h2>
+            {(title || description) && (
+              <div className="flex items-start justify-between gap-4 px-6 pt-5 pb-4 border-b border-white/5">
+                <div>
+                  {title && <h2 className="text-base font-bold text-white">{title}</h2>}
+                  {description && <p className="text-xs text-white/40 mt-0.5">{description}</p>}
+                </div>
                 <button
                   onClick={onClose}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                  className="p-1.5 rounded-xl text-white/30 hover:text-white hover:bg-white/8 transition-all shrink-0"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -61,7 +66,7 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
             )}
             <div className="p-6">{children}</div>
           </motion.div>
-        </div>
+        </motion.div>
       )}
     </AnimatePresence>
   );
