@@ -22,8 +22,8 @@ export const authService = {
     return res.data.data;
   },
 
-  async me(): Promise<User> {
-    const res = await api.get<ApiResponse<User>>('/auth/me');
+  async me(options?: { timeout?: number }): Promise<User> {
+    const res = await api.get<ApiResponse<User>>('/auth/me', { timeout: options?.timeout });
     return res.data.data;
   },
 };

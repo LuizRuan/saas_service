@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     setToken(storedToken);
     authService
-      .me()
+      .me({ timeout: 8_000 })
       .then((me) => setUser(me))
       .catch(() => clearAuth())
       .finally(() => setIsLoading(false));
