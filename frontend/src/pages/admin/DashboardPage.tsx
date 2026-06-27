@@ -71,9 +71,12 @@ export function AdminDashboardPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="h-8 bg-white/5 rounded-xl w-64 animate-pulse" />
+        <div className="h-8 bg-white/10 rounded-xl w-64 animate-pulse" />
         <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          {[1,2,3,4].map(i => <div key={i} className="rounded-2xl border border-white/5 h-32 animate-pulse" style={{ background: 'rgba(255,255,255,0.02)' }} />)}
+          {[1,2,3,4].map(i => <div key={i} className="rounded-2xl border border-white/10 h-32 animate-pulse" style={{ background: 'rgba(255,255,255,0.06)' }} />)}
+        </div>
+        <div className="grid lg:grid-cols-2 gap-5">
+          {[1,2].map(i => <div key={i} className="rounded-2xl border border-white/10 h-48 animate-pulse" style={{ background: 'rgba(255,255,255,0.06)' }} />)}
         </div>
       </div>
     );

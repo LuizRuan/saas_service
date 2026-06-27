@@ -2,9 +2,16 @@ import { useState, useEffect } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Spinner } from '@/components/ui/Spinner';
+import type { UserRole } from '@/types';
+
+const ROLE_PATHS: Record<UserRole, string> = {
+  client: '/cliente',
+  provider: '/prestador',
+  admin: '/admin',
+};
 
 export function PublicOnlyRoute() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, logout } = useAuth();
   const [slow, setSlow] = useState(false);
 
   useEffect(() => {
@@ -29,9 +36,10 @@ export function PublicOnlyRoute() {
   }
 
   if (user) {
-    if (user.role === 'client') return <Navigate to="/cliente" replace />;
-    if (user.role === 'provider') return <Navigate to="/prestador" replace />;
-    return <Navigate to="/admin" replace />;
+    const dest = ROLE_PATHS[user.role];
+    if (dest) return <Navigate to={dest} replace />;
+    logout();
+    return <Navigate to="/login" replace />;
   }
 
   return <Outlet />;
