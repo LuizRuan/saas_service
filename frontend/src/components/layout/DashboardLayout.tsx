@@ -5,7 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { cn, getInitials } from '@/lib/utils';
 import {
   Home, FileText, ClipboardList, CreditCard, Star,
-  Users, Briefcase, ShieldAlert, Menu, X, LogOut,
+  Users, ShieldAlert, Menu, X, LogOut,
   Wrench, Search, Plus, Compass, Bell, ChevronRight,
   Zap,
 } from 'lucide-react';
@@ -45,8 +45,6 @@ function useNavItems() {
   return [
     { label: 'Início', to: '/admin', icon: <Home className="h-4 w-4" /> },
     { label: 'Usuários', to: '/admin/usuarios', icon: <Users className="h-4 w-4" /> },
-    { label: 'Prestadores', to: '/admin/prestadores', icon: <Briefcase className="h-4 w-4" /> },
-    { label: 'Solicitações', to: '/admin/solicitacoes', icon: <FileText className="h-4 w-4" /> },
     { label: 'Ordens', to: '/admin/ordens', icon: <ClipboardList className="h-4 w-4" /> },
     { label: 'Pagamentos', to: '/admin/pagamentos', icon: <CreditCard className="h-4 w-4" /> },
     { label: 'Disputas', to: '/admin/disputas', icon: <ShieldAlert className="h-4 w-4" /> },

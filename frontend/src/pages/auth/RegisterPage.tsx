@@ -10,7 +10,7 @@ import { Wrench, User, HardHat, ChevronLeft, ArrowRight, AlertCircle } from 'luc
 type Role = 'client' | 'provider';
 
 export function RegisterPage() {
-  const { registerClient, registerProvider, user } = useAuth();
+  const { registerClient, registerProvider } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState<0 | 1>(0);
   const [role, setRole] = useState<Role>('client');
@@ -39,12 +39,6 @@ export function RegisterPage() {
       categoryService.getAll().then(setCategories).catch(() => {});
     }
   }, [step, role]);
-
-  if (user) {
-    const path = user.role === 'client' ? '/cliente' : user.role === 'provider' ? '/prestador' : '/admin';
-    navigate(path, { replace: true });
-    return null;
-  }
 
   const handleSelectRole = (r: Role) => {
     setRole(r);

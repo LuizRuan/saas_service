@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ShieldAlert, AlertCircle, X, ChevronDown } from 'lucide-react';
 import { adminService } from '@/services/admin.service';
 import type { AdminDispute, DisputeStatus } from '@/services/admin.service';
+import { emitAdminRefresh } from '@/lib/adminEvents';
 import { fadeUp } from '@/lib/animations';
 import { formatDate, formatDateTime } from '@/lib/utils';
 
@@ -106,6 +107,7 @@ export function AdminDisputasPage() {
       await adminService.updateDisputeStatus(selected._id, newStatus, adminNotes || undefined);
       setDisputes(prev => prev.map(d => d._id === selected._id ? { ...d, status: newStatus, adminNotes: adminNotes || undefined } : d));
       setSelected(prev => prev ? { ...prev, status: newStatus, adminNotes: adminNotes || undefined } : null);
+      emitAdminRefresh();
     } catch {
       setUpdateError('Não foi possível atualizar a disputa.');
     } finally {

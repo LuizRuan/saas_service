@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Users, Briefcase, FileText, ShieldAlert, BarChart3,
-  Clock, CheckCircle2, AlertTriangle, TrendingUp, Activity, AlertCircle,
+  Clock, CheckCircle2, AlertTriangle, TrendingUp, Activity, AlertCircle, RefreshCw,
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import api from '@/lib/axios';
+import { onAdminRefresh } from '@/lib/adminEvents';
 import { formatDate } from '@/lib/utils';
 
 const CHART_COLORS = ['#3b82f6','#10b981','#8b5cf6','#f59e0b','#ef4444','#06b6d4'];
@@ -36,13 +37,36 @@ export function AdminDashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  useEffect(() => {
+  const fetchStats = useCallback((showLoader = false) => {
+    if (showLoader) setLoading(true);
+    setFetchError(false);
     api.get('/admin/stats')
-      .then(res => setStats(res.data.data))
+      .then(res => { setStats(res.data.data); setLastUpdated(new Date()); })
       .catch(() => setFetchError(true))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    fetchStats(true);
+
+    // Fallback: re-fetch a cada 60s para mudanças externas (outro admin, outra aba)
+    const interval = setInterval(() => fetchStats(false), 60_000);
+
+    // Atualização imediata quando qualquer ação admin emite o evento
+    const unsubscribe = onAdminRefresh(() => fetchStats(false));
+
+    // Atualiza ao voltar para a aba
+    const handleVisibility = () => { if (document.visibilityState === 'visible') fetchStats(false); };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      clearInterval(interval);
+      unsubscribe();
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [fetchStats]);
 
   if (loading) {
     return (
@@ -77,16 +101,35 @@ export function AdminDashboardPage() {
 
       {/* Header */}
       <motion.div {...fadeUp(0)} className="mb-8">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-500/15 border border-blue-500/20">
-            <Activity className="h-3.5 w-3.5 text-blue-400" />
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-500/15 border border-blue-500/20">
+                <Activity className="h-3.5 w-3.5 text-blue-400" />
+              </div>
+              <span className="text-xs font-semibold text-blue-400/80 uppercase tracking-widest">Visão geral</span>
+            </div>
+            <h1 className="text-3xl font-bold text-white tracking-tight">
+              Painel <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300">Administrativo</span>
+            </h1>
+            <p className="text-slate-400 text-sm mt-1">
+              Dados atualizados automaticamente a cada 30 segundos.
+              {lastUpdated && (
+                <span className="ml-2 text-white/25">
+                  Última atualização: {lastUpdated.toLocaleTimeString('pt-BR')}
+                </span>
+              )}
+            </p>
           </div>
-          <span className="text-xs font-semibold text-blue-400/80 uppercase tracking-widest">Visão geral</span>
+          <button
+            onClick={() => fetchStats(false)}
+            title="Atualizar agora"
+            className="mt-1 flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white/50 hover:bg-white/10 hover:text-white/80 transition-all shrink-0"
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            Atualizar
+          </button>
         </div>
-        <h1 className="text-3xl font-bold text-white tracking-tight">
-          Painel <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300">Administrativo</span>
-        </h1>
-        <p className="text-slate-400 text-sm mt-1">Monitoramento em tempo real da plataforma MãoCerta.</p>
       </motion.div>
 
       {/* Alert pendentes */}

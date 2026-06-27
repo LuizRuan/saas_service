@@ -4,6 +4,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute';
+import { PublicOnlyRoute } from '@/components/layout/PublicOnlyRoute';
 import { RoleRedirect } from '@/components/shared/RoleRedirect';
 
 import { LandingPage } from '@/pages/public/LandingPage';
@@ -26,8 +27,6 @@ import { ProviderOrdersPage } from '@/pages/provider/ProviderOrdersPage';
 import { ProviderOrderDetailPage } from '@/pages/provider/ProviderOrderDetailPage';
 import { AdminDashboardPage } from '@/pages/admin/DashboardPage';
 import { AdminUsersPage } from '@/pages/admin/UsersPage';
-import { AdminProvidersPage } from '@/pages/admin/ProvidersPage';
-import { AdminServiceRequestsPage } from '@/pages/admin/ServiceRequestsPage';
 import { AdminOrdersPage } from '@/pages/admin/OrdersPage';
 import { AdminDisputasPage } from '@/pages/admin/DisputasPage';
 import { AdminPaymentsPage } from '@/pages/admin/PaymentsPage';
@@ -37,12 +36,14 @@ export function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Rotas públicas */}
-          <Route element={<PublicLayout />}>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/cadastro" element={<RegisterPage />} />
-            <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
+          {/* Rotas públicas — redireciona para dashboard se logado */}
+          <Route element={<PublicOnlyRoute />}>
+            <Route element={<PublicLayout />}>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/cadastro" element={<RegisterPage />} />
+              <Route path="/esqueci-senha" element={<ForgotPasswordPage />} />
+            </Route>
           </Route>
 
           {/* Cliente */}
@@ -76,8 +77,6 @@ export function App() {
             <Route element={<DashboardLayout />}>
               <Route path="/admin" element={<AdminDashboardPage />} />
               <Route path="/admin/usuarios" element={<AdminUsersPage />} />
-              <Route path="/admin/prestadores" element={<AdminProvidersPage />} />
-              <Route path="/admin/solicitacoes" element={<AdminServiceRequestsPage />} />
               <Route path="/admin/ordens" element={<AdminOrdersPage />} />
               <Route path="/admin/disputas" element={<AdminDisputasPage />} />
               <Route path="/admin/pagamentos" element={<AdminPaymentsPage />} />

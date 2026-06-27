@@ -12,6 +12,8 @@ import mongoose from 'mongoose';
 
 class AdminService {
   async getStats() {
+    const ACTIVE_FILTER = { status: { $ne: 'deleted' as const } };
+
     const [
       totalUsers,
       totalClients,
@@ -24,9 +26,9 @@ class AdminService {
       totalDisputes,
       openDisputes,
     ] = await Promise.all([
-      User.countDocuments(),
-      User.countDocuments({ role: 'client' }),
-      User.countDocuments({ role: 'provider' }),
+      User.countDocuments(ACTIVE_FILTER),
+      User.countDocuments({ role: 'client', ...ACTIVE_FILTER }),
+      User.countDocuments({ role: 'provider', ...ACTIVE_FILTER }),
       ProviderProfile.countDocuments({ status: 'pending' }),
       ServiceRequest.countDocuments(),
       ServiceRequest.countDocuments({ status: 'open' }),

@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { adminService } from '@/services/admin.service';
 import type { AdminUser, AuditLogEntry } from '@/services/admin.service';
+import { emitAdminRefresh } from '@/lib/adminEvents';
 import { useAuth } from '@/hooks/useAuth';
 import { fadeUp } from '@/lib/animations';
 import { formatDate, formatDateTime } from '@/lib/utils';
@@ -196,71 +197,158 @@ function DeleteModal({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      transition={{ duration: 0.22 }}
+      className="fixed inset-0 flex items-center justify-center p-4"
+      style={{ zIndex: 9999, background: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' }}
       onClick={onClose}
     >
       <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 16 }}
+        initial={{ opacity: 0, scale: 0.94, y: 22 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 16 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-        className="w-full max-w-md rounded-2xl border border-red-500/20 p-6 shadow-2xl"
-        style={{ background: 'linear-gradient(135deg, #0d1530 0%, #0a0f1e 100%)' }}
+        exit={{ opacity: 0, scale: 0.94, y: 22 }}
+        transition={{ type: 'spring', stiffness: 340, damping: 30 }}
+        className="w-full max-w-md rounded-2xl overflow-hidden"
+        style={{
+          background: 'linear-gradient(160deg, #1a0808 0%, #120505 50%, #0e0404 100%)',
+          border: '1px solid rgba(239,68,68,0.22)',
+          boxShadow: '0 0 0 1px rgba(239,68,68,0.08), 0 30px 60px rgba(0,0,0,0.75), 0 0 100px rgba(239,68,68,0.06)',
+        }}
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-2">
-            <Trash2 className="h-4 w-4 text-red-400" />
-            <h2 className="text-base font-bold text-white">Excluir usuário</h2>
+        {/* Header */}
+        <div
+          className="flex items-center justify-between px-6 pt-5 pb-4"
+          style={{ borderBottom: '1px solid rgba(239,68,68,0.12)' }}
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className="flex items-center justify-center w-9 h-9 rounded-xl"
+              style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.22)' }}
+            >
+              <Trash2 className="h-4 w-4 text-red-400" />
+            </div>
+            <div>
+              <h2 className="text-base font-bold text-white leading-tight">Excluir usuário</h2>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-red-500/70 mt-0.5">
+                Ação irreversível
+              </p>
+            </div>
           </div>
-          <button onClick={onClose} className="text-white/30 hover:text-white transition-colors">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-
-        <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-4 mb-5">
-          <p className="text-sm text-red-300 font-semibold mb-1">Ação irreversível</p>
-          <p className="text-xs text-red-200/70">
-            O usuário <span className="font-semibold text-red-200">{user.name}</span> será marcado
-            como excluído e não conseguirá mais acessar a plataforma. Os dados relacionados
-            (ordens, orçamentos) serão preservados.
-          </p>
-        </div>
-
-        <label className="flex items-start gap-3 cursor-pointer mb-5">
-          <input
-            type="checkbox"
-            checked={confirmed}
-            onChange={e => setConfirmed(e.target.checked)}
-            className="mt-0.5 h-4 w-4 rounded accent-red-500 cursor-pointer"
-          />
-          <span className="text-sm text-white/60">
-            Entendo que esta ação não pode ser desfeita.
-          </span>
-        </label>
-
-        {error && (
-          <div className="flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3 mb-4">
-            <AlertCircle className="h-4 w-4 text-red-400 shrink-0" />
-            <p className="text-xs text-red-300">{error}</p>
-          </div>
-        )}
-
-        <div className="flex gap-3">
           <button
             onClick={onClose}
-            disabled={loading}
-            className="flex-1 rounded-xl border border-white/10 py-2.5 text-sm font-semibold text-white/50 hover:text-white hover:border-white/20 transition-all disabled:opacity-40"
+            className="flex items-center justify-center w-8 h-8 rounded-xl text-white/25 hover:text-white/80 transition-all"
+            style={{ background: 'transparent' }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.07)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
           >
-            Cancelar
+            <X className="h-4 w-4" />
           </button>
-          <button
-            onClick={handleDelete}
-            disabled={loading || !confirmed}
-            className="flex-1 rounded-xl bg-red-500/20 border border-red-500/30 py-2.5 text-sm font-semibold text-red-300 hover:bg-red-500/30 transition-all disabled:opacity-40"
+        </div>
+
+        {/* Body */}
+        <div className="px-6 pt-5 pb-6 space-y-5">
+          {/* Warning banner */}
+          <div
+            className="rounded-xl p-4"
+            style={{
+              background: 'linear-gradient(135deg, rgba(239,68,68,0.09) 0%, rgba(220,38,38,0.05) 100%)',
+              border: '1px solid rgba(239,68,68,0.18)',
+            }}
           >
-            {loading ? 'Excluindo...' : 'Excluir'}
-          </button>
+            <div className="flex items-center gap-2 mb-2">
+              <AlertCircle className="h-3.5 w-3.5 text-red-400 shrink-0" />
+              <span className="text-xs font-bold text-red-300 uppercase tracking-wider">Ação irreversível</span>
+            </div>
+            <p className="text-xs text-red-200/60 leading-relaxed">
+              O usuário{' '}
+              <span className="text-red-200 font-semibold">{user.name}</span>{' '}
+              será marcado como excluído e não conseguirá mais acessar a plataforma.
+              Os dados relacionados serão preservados para histórico e auditoria.
+            </p>
+          </div>
+
+          {/* Custom checkbox */}
+          <div
+            className="flex items-start gap-3 cursor-pointer group select-none"
+            role="checkbox"
+            aria-checked={confirmed}
+            tabIndex={0}
+            onClick={() => setConfirmed(c => !c)}
+            onKeyDown={e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); setConfirmed(c => !c); } }}
+          >
+            <div
+              className="relative mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md transition-all duration-200 pointer-events-none"
+              style={{
+                border: confirmed ? '2px solid rgb(239,68,68)' : '2px solid rgba(255,255,255,0.22)',
+                background: confirmed ? 'rgb(239,68,68)' : 'rgba(255,255,255,0.04)',
+                boxShadow: confirmed ? '0 0 10px rgba(239,68,68,0.35)' : 'none',
+              }}
+            >
+              <AnimatePresence>
+                {confirmed && (
+                  <motion.svg
+                    key="check"
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0, opacity: 0 }}
+                    transition={{ duration: 0.13, type: 'spring', stiffness: 500, damping: 20 }}
+                    className="h-3 w-3 text-white"
+                    viewBox="0 0 12 12"
+                    fill="none"
+                  >
+                    <path
+                      d="M2 6l3 3 5-5"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </motion.svg>
+                )}
+              </AnimatePresence>
+            </div>
+            <span className="text-sm text-white/55 leading-relaxed group-hover:text-white/80 transition-colors">
+              Entendo que esta ação não pode ser desfeita.
+            </span>
+          </div>
+
+          {error && (
+            <div className="flex items-center gap-2 rounded-xl p-3" style={{ border: '1px solid rgba(239,68,68,0.2)', background: 'rgba(239,68,68,0.08)' }}>
+              <AlertCircle className="h-4 w-4 text-red-400 shrink-0" />
+              <p className="text-xs text-red-300">{error}</p>
+            </div>
+          )}
+
+          {/* Buttons */}
+          <div className="flex gap-3 pt-1">
+            <button
+              onClick={onClose}
+              disabled={loading}
+              className="flex-1 rounded-xl py-2.5 text-sm font-semibold text-white/50 hover:text-white transition-all disabled:opacity-40"
+              style={{ border: '1px solid rgba(255,255,255,0.1)', background: 'transparent' }}
+              onMouseEnter={e => { if (!loading) { e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; } }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; }}
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleDelete}
+              disabled={loading || !confirmed}
+              className="flex-1 rounded-xl py-2.5 text-sm font-bold transition-all"
+              style={{
+                background: confirmed && !loading ? 'rgba(239,68,68,0.2)' : 'rgba(255,255,255,0.04)',
+                border: confirmed && !loading ? '1px solid rgba(239,68,68,0.4)' : '1px solid rgba(255,255,255,0.08)',
+                color: confirmed && !loading ? 'rgb(252,165,165)' : 'rgba(255,255,255,0.2)',
+                cursor: !confirmed || loading ? 'not-allowed' : 'pointer',
+                boxShadow: confirmed && !loading ? '0 0 20px rgba(239,68,68,0.12)' : 'none',
+                opacity: !confirmed || loading ? 0.55 : 1,
+              }}
+              onMouseEnter={e => { if (confirmed && !loading) { e.currentTarget.style.background = 'rgba(239,68,68,0.3)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.55)'; } }}
+              onMouseLeave={e => { if (confirmed && !loading) { e.currentTarget.style.background = 'rgba(239,68,68,0.2)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.4)'; } }}
+            >
+              {loading ? 'Excluindo...' : 'Excluir usuário'}
+            </button>
+          </div>
         </div>
       </motion.div>
     </motion.div>
@@ -426,17 +514,19 @@ export function AdminUsersPage() {
   function handleBlockSuccess() {
     setBlockTarget(null);
     loadUsers();
+    emitAdminRefresh();
   }
 
   function handleDeleteSuccess() {
     setDeleteTarget(null);
     loadUsers();
+    emitAdminRefresh();
   }
 
   function handleUnblock(u: AdminUser) {
     setActionError('');
     adminService.unblockUser(u._id)
-      .then(() => loadUsers())
+      .then(() => { loadUsers(); emitAdminRefresh(); })
       .catch((e: any) => {
         setActionError(e?.response?.data?.message ?? 'Não foi possível desbloquear o usuário.');
       });

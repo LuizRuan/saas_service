@@ -1,23 +1,16 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { Wrench, Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
 
 export function LoginPage() {
-  const { login, user } = useAuth();
-  const navigate = useNavigate();
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  if (user) {
-    const path = user.role === 'client' ? '/cliente' : user.role === 'provider' ? '/prestador' : '/admin';
-    navigate(path, { replace: true });
-    return null;
-  }
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
