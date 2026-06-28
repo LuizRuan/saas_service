@@ -1,7 +1,11 @@
 import { Resend } from 'resend';
 import { env } from '../config/env';
 
-const resend = new Resend(env.RESEND_API_KEY);
+let _resend: Resend | null = null;
+function getResend(): Resend {
+  if (!_resend) _resend = new Resend(env.RESEND_API_KEY);
+  return _resend;
+}
 
 const BRAND_COLOR = '#10b981';
 const BRAND_NAME = 'MãoCerta';
@@ -87,7 +91,7 @@ async function send(to: string, subject: string, html: string): Promise<void> {
     console.log(`[email:dev] Para: ${to} | Assunto: ${subject}`);
     return;
   }
-  const { error } = await resend.emails.send({
+  const { error } = await getResend().emails.send({
     from: `${BRAND_NAME} <${env.FROM_EMAIL}>`,
     to,
     subject,
