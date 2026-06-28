@@ -5,10 +5,13 @@ import { sendSuccess } from '../utils/response';
 import { env } from '../config/env';
 import { UnauthorizedError } from '../utils/errors';
 
+// In production the frontend (Vercel) and backend (Render) are on different domains,
+// so cookies must use sameSite:'none' + secure:true to be sent on cross-origin requests.
+const IS_PROD = env.NODE_ENV === 'production';
 const COOKIE_BASE = {
   httpOnly: true,
-  secure: env.NODE_ENV === 'production',
-  sameSite: 'strict' as const,
+  secure: IS_PROD,
+  sameSite: (IS_PROD ? 'none' : 'strict') as 'none' | 'strict',
 };
 
 function setAuthCookies(res: Response, accessToken: string, refreshToken: string): void {
