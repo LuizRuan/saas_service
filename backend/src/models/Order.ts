@@ -93,5 +93,8 @@ orderSchema.index({ serviceRequestId: 1 });
 orderSchema.index({ clientId: 1 });
 orderSchema.index({ providerId: 1 });
 orderSchema.index({ status: 1 });
+orderSchema.index({ clientId: 1, status: 1 });
+orderSchema.index({ providerId: 1, status: 1 });
+orderSchema.index({ status: 1, createdAt: -1 });
 
 export const Order = mongoose.model<IOrder>('Order', orderSchema);

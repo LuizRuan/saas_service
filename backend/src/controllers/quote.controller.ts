@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from '../types';
 import { quoteService } from '../services/quote.service';
 import { sendSuccess } from '../utils/response';
+import { parsePagination } from '../utils/pagination';
 
 class QuoteController {
   async create(req: AuthenticatedRequest, res: Response): Promise<void> {
@@ -14,8 +15,9 @@ class QuoteController {
   }
 
   async getMy(req: AuthenticatedRequest, res: Response): Promise<void> {
-    const quotes = await quoteService.getMy(req.user!.userId, req.user!.role);
-    sendSuccess(res, quotes);
+    const pagination = parsePagination(req.query);
+    const result = await quoteService.getMy(req.user!.userId, req.user!.role, pagination);
+    sendSuccess(res, result);
   }
 
   async getByRequest(req: AuthenticatedRequest, res: Response): Promise<void> {

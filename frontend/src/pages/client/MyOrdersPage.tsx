@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -22,19 +22,28 @@ const STATUS_CONFIG: Record<OrderStatus, { label: string; icon: React.ElementTyp
 export function MyOrdersPage() {
   const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    const controller = new AbortController();
-    orderService.getMy()
-      .then(data => setOrders(data))
-      .catch(() => {
-        if (!controller.signal.aborted) setError('Não foi possível carregar suas ordens.');
-      })
-      .finally(() => setLoading(false));
-    return () => controller.abort();
+  const load = useCallback(async (p: number) => {
+    if (p === 1) setLoading(true);
+    else setLoadingMore(true);
+    try {
+      const result = await orderService.getMy(p, 10);
+      setOrders(prev => p === 1 ? result.items : [...prev, ...result.items]);
+      setHasMore(p < result.pagination.totalPages);
+    } catch {
+      if (p === 1) setError('Não foi possível carregar suas ordens.');
+    } finally {
+      if (p === 1) setLoading(false);
+      else setLoadingMore(false);
+    }
   }, []);
+
+  useEffect(() => { load(page); }, [page, load]);
 
   return (
     <div className="relative max-w-4xl mx-auto">
@@ -112,6 +121,7 @@ export function MyOrdersPage() {
 
       {/* Orders list */}
       {!loading && !error && orders.length > 0 && (
+        <>
         <div className="space-y-3">
           {orders.map((order, i) => {
             const cfg = STATUS_CONFIG[order.status] ?? STATUS_CONFIG.created;
@@ -166,6 +176,18 @@ export function MyOrdersPage() {
             );
           })}
         </div>
+        {hasMore && (
+          <div className="mt-4 flex justify-center">
+            <button
+              onClick={() => setPage(p => p + 1)}
+              disabled={loadingMore}
+              className="px-5 py-2.5 rounded-xl border border-white/10 bg-white/5 text-sm font-semibold text-white/60 hover:bg-white/10 hover:border-white/20 hover:text-white/80 disabled:opacity-50 transition-all"
+            >
+              {loadingMore ? 'Carregando...' : 'Carregar mais'}
+            </button>
+          </div>
+        )}
+        </>
       )}
     </div>
   );

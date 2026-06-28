@@ -8,14 +8,9 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 
 import api from '@/lib/axios';
 import { onAdminRefresh } from '@/lib/adminEvents';
 import { formatDate } from '@/lib/utils';
+import { fadeUp } from '@/lib/animations';
 
 const CHART_COLORS = ['#3b82f6','#10b981','#8b5cf6','#f59e0b','#ef4444','#06b6d4'];
-
-const fadeUp = (i = 0) => ({
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
-  transition: { delay: i * 0.07, duration: 0.45, ease: 'easeOut' as const },
-});
 
 const STATUS_MAP: Record<string, { label: string; cls: string }> = {
   open:      { label: 'Aberto',      cls: 'text-blue-400   bg-blue-500/10   border-blue-500/20'   },

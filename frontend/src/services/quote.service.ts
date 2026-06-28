@@ -1,5 +1,5 @@
 import api from '@/lib/axios';
-import type { ApiResponse, CreateQuoteData, Order, Quote } from '@/types';
+import type { ApiResponse, CreateQuoteData, Order, Quote, PaginatedResponse } from '@/types';
 
 export const quoteService = {
   async create(data: CreateQuoteData): Promise<Quote> {
@@ -7,8 +7,8 @@ export const quoteService = {
     return res.data.data;
   },
 
-  async getMy(): Promise<Quote[]> {
-    const res = await api.get<ApiResponse<Quote[]>>('/quotes/my');
+  async getMy(page = 1, limit = 10): Promise<PaginatedResponse<Quote>> {
+    const res = await api.get<ApiResponse<PaginatedResponse<Quote>>>('/quotes/my', { params: { page, limit } });
     return res.data.data;
   },
 

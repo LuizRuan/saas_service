@@ -49,20 +49,33 @@ class ReviewService {
     return review;
   }
 
-  async getByProvider(providerId: string) {
-    return Review.find({ providerId })
-      .populate('clientId', 'name')
-      .populate('orderId', 'completedAt')
-      .sort({ createdAt: -1 });
+  async getByProvider(providerId: string, { page, limit, skip }: { page: number; limit: number; skip: number }) {
+    const filter = { providerId };
+    const [items, total] = await Promise.all([
+      Review.find(filter)
+        .populate('clientId', 'name')
+        .populate('orderId', 'completedAt')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Review.countDocuments(filter),
+    ]);
+    return { items, pagination: { total, page, limit, totalPages: Math.ceil(total / limit) } };
   }
 
-  async getMy(userId: string, role: UserRole) {
+  async getMy(userId: string, role: UserRole, { page, limit, skip }: { page: number; limit: number; skip: number }) {
     const filter = role === 'client' ? { clientId: userId } : { providerId: userId };
-    return Review.find(filter)
-      .populate('orderId', 'completedAt serviceRequestId')
-      .populate('clientId', 'name')
-      .populate('providerId', 'name')
-      .sort({ createdAt: -1 });
+    const [items, total] = await Promise.all([
+      Review.find(filter)
+        .populate('orderId', 'completedAt serviceRequestId')
+        .populate('clientId', 'name')
+        .populate('providerId', 'name')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Review.countDocuments(filter),
+    ]);
+    return { items, pagination: { total, page, limit, totalPages: Math.ceil(total / limit) } };
   }
 }
 

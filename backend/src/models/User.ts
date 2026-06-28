@@ -5,6 +5,9 @@ export interface IUser extends Document {
   name: string;
   email: string;
   passwordHash: string;
+  refreshTokenHash?: string;
+  passwordResetToken?: string;
+  passwordResetExpires?: Date;
   phone: string;
   role: UserRole;
   city: string;
@@ -44,6 +47,12 @@ const userSchema = new Schema<IUser>(
       required: true,
       select: false,
     },
+    refreshTokenHash: {
+      type: String,
+      select: false,
+    },
+    passwordResetToken:   { type: String, select: false },
+    passwordResetExpires: { type: Date,   select: false },
     phone: {
       type: String,
       trim: true,
@@ -81,6 +90,7 @@ const userSchema = new Schema<IUser>(
     toJSON: {
       transform(_doc, ret: any) {
         delete ret.passwordHash;
+        delete ret.refreshTokenHash;
         delete ret.__v;
         return ret;
       },

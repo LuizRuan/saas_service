@@ -82,6 +82,8 @@ const quoteSchema = new Schema<IQuote>(
 quoteSchema.index({ serviceRequestId: 1 });
 quoteSchema.index({ providerId: 1 });
 quoteSchema.index({ status: 1 });
+quoteSchema.index({ providerId: 1, status: 1 });
+quoteSchema.index({ serviceRequestId: 1, status: 1 });
 
 // Calcula sinal com base em env.DEPOSIT_PERCENT
 quoteSchema.pre('validate', function (next) {

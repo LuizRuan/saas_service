@@ -2,18 +2,27 @@ import { Order } from '../models/Order';
 import { ServiceRequest } from '../models/ServiceRequest';
 import { Payment } from '../models/Payment';
 import { ProviderProfile } from '../models/ProviderProfile';
+import { User } from '../models/User';
 import { AppError, ForbiddenError, NotFoundError } from '../utils/errors';
 import { OrderStatus, UserRole } from '../types';
+import { emailService } from './email.service';
+import { env } from '../config/env';
 
 class OrderService {
-  async getMy(userId: string, role: UserRole) {
+  async getMy(userId: string, role: UserRole, { page, limit, skip }: { page: number; limit: number; skip: number }) {
     const filter = role === 'client' ? { clientId: userId } : { providerId: userId };
-    return Order.find(filter)
-      .populate('serviceRequestId', 'description city urgency')
-      .populate('quoteId', 'totalAmount depositAmount remainingAmount')
-      .populate('clientId', 'name phone')
-      .populate('providerId', 'name phone')
-      .sort({ createdAt: -1 });
+    const [items, total] = await Promise.all([
+      Order.find(filter)
+        .populate('serviceRequestId', 'description city urgency')
+        .populate('quoteId', 'totalAmount depositAmount remainingAmount')
+        .populate('clientId', 'name phone')
+        .populate('providerId', 'name phone')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Order.countDocuments(filter),
+    ]);
+    return { items, pagination: { total, page, limit, totalPages: Math.ceil(total / limit) } };
   }
 
   async getById(orderId: string, userId: string, role: UserRole) {
@@ -31,7 +40,7 @@ class OrderService {
     return order;
   }
 
-  async updateStatus(orderId: string, newStatus: OrderStatus, userId: string, role: UserRole) {
+  async updateStatus(orderId: string, newStatus: OrderStatus, userId: string, role: UserRole, scheduledDate?: string) {
     const order = await Order.findById(orderId);
     if (!order) throw new NotFoundError('Ordem de serviço');
 
@@ -51,6 +60,10 @@ class OrderService {
         `Transição de status inválida: ${order.status} → ${newStatus}`,
         400
       );
+    }
+
+    if (newStatus === 'scheduled' && scheduledDate) {
+      order.scheduledDate = new Date(scheduledDate);
     }
 
     // Provider can only move to in_progress if deposit is paid
@@ -74,6 +87,17 @@ class OrderService {
 
     order.status = newStatus;
     await order.save();
+
+    // Notifica as partes relevantes sobre a mudança de status (fire-and-forget)
+    const notifyStatuses: OrderStatus[] = ['scheduled', 'in_progress', 'waiting_approval', 'completed', 'cancelled'];
+    if (notifyStatuses.includes(newStatus)) {
+      const ordersUrl = `${env.APP_URL}/cliente/ordens/${order._id.toString()}`;
+      const recipientId = newStatus === 'waiting_approval' ? order.clientId : order.clientId;
+      User.findById(recipientId).select('email name').then(u => {
+        if (u) emailService.sendOrderStatusChange(u.email, u.name, newStatus, ordersUrl).catch(() => {});
+      }).catch(() => {});
+    }
+
     return order;
   }
 

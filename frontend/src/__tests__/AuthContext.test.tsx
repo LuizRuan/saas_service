@@ -4,13 +4,13 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { AuthProvider, AuthContext } from '@/contexts/AuthContext';
 import { useContext } from 'react';
 
+const mockUser = { _id: '1', name: 'Test User', email: 'test@test.com', role: 'client' };
+
 vi.mock('@/services/auth.service', () => ({
   authService: {
-    me: vi.fn().mockResolvedValue({ _id: '1', name: 'Test User', email: 'test@test.com', role: 'client' }),
-    login: vi.fn().mockResolvedValue({
-      token: 'fake-token',
-      user: { _id: '1', name: 'Test User', email: 'test@test.com', role: 'client' },
-    }),
+    me: vi.fn().mockRejectedValue(new Error('unauthenticated')),
+    login: vi.fn().mockResolvedValue(mockUser),
+    logout: vi.fn().mockResolvedValue(undefined),
     registerClient: vi.fn(),
     registerProvider: vi.fn(),
   },
@@ -31,29 +31,29 @@ function TestConsumer() {
 
 describe('AuthContext', () => {
   beforeEach(() => {
-    localStorage.clear();
+    vi.clearAllMocks();
   });
 
-  it('inicia sem usuário quando não há token salvo', async () => {
+  it('inicia sem usuário quando /auth/me retorna 401', async () => {
     render(<AuthProvider><TestConsumer /></AuthProvider>);
     await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'));
     expect(screen.getByTestId('user').textContent).toBe('nenhum');
   });
 
-  it('persiste auth após login', async () => {
+  it('seta usuário após login bem-sucedido', async () => {
     render(<AuthProvider><TestConsumer /></AuthProvider>);
     await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'));
     await userEvent.click(screen.getByText('Login'));
     await waitFor(() => expect(screen.getByTestId('user').textContent).toBe('Test User'));
-    expect(localStorage.getItem('token')).toBe('fake-token');
   });
 
-  it('limpa auth após logout', async () => {
-    localStorage.setItem('token', 'fake-token');
+  it('limpa usuário após logout', async () => {
+    const { authService } = await import('@/services/auth.service');
+    (authService.me as ReturnType<typeof vi.fn>).mockResolvedValueOnce(mockUser);
+
     render(<AuthProvider><TestConsumer /></AuthProvider>);
-    await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'));
+    await waitFor(() => expect(screen.getByTestId('user').textContent).toBe('Test User'));
     await userEvent.click(screen.getByText('Logout'));
-    expect(screen.getByTestId('user').textContent).toBe('nenhum');
-    expect(localStorage.getItem('token')).toBeNull();
+    await waitFor(() => expect(screen.getByTestId('user').textContent).toBe('nenhum'));
   });
 });

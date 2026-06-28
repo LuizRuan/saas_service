@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from '../types';
 import { reviewService } from '../services/review.service';
 import { sendSuccess } from '../utils/response';
+import { parsePagination } from '../utils/pagination';
 
 class ReviewController {
   async create(req: AuthenticatedRequest, res: Response): Promise<void> {
@@ -15,13 +16,15 @@ class ReviewController {
 
   async getByProvider(req: AuthenticatedRequest, res: Response): Promise<void> {
     const providerId = String(req.params['providerId']);
-    const reviews = await reviewService.getByProvider(providerId);
-    sendSuccess(res, reviews);
+    const pagination = parsePagination(req.query);
+    const result = await reviewService.getByProvider(providerId, pagination);
+    sendSuccess(res, result);
   }
 
   async getMy(req: AuthenticatedRequest, res: Response): Promise<void> {
-    const reviews = await reviewService.getMy(req.user!.userId, req.user!.role);
-    sendSuccess(res, reviews);
+    const pagination = parsePagination(req.query);
+    const result = await reviewService.getMy(req.user!.userId, req.user!.role, pagination);
+    sendSuccess(res, result);
   }
 }
 

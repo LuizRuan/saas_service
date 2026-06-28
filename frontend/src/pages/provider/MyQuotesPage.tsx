@@ -1,16 +1,11 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useCallback, useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FileText, MapPin, Calendar, AlertCircle, CheckCircle2, Clock, XCircle, DollarSign, ArrowRight } from 'lucide-react';
+import { FileText, MapPin, Calendar, AlertCircle, CheckCircle2, Clock, XCircle, DollarSign, ArrowRight, Search } from 'lucide-react';
 import { quoteService } from '@/services/quote.service';
 import type { Quote, ServiceRequest } from '@/types';
 import { formatCurrency, formatDate } from '@/lib/utils';
-
-const fadeUp = (i = 0) => ({
-  initial: { opacity: 0, y: 18 },
-  animate: { opacity: 1, y: 0 },
-  transition: { delay: i * 0.06, duration: 0.4, ease: 'easeOut' as const },
-});
+import { fadeUp } from '@/lib/animations';
 
 const STATUS: Record<string, { label: string; icon: React.ElementType; cls: string }> = {
   sent:     { label: 'Enviado',   icon: Clock,         cls: 'text-blue-400   bg-blue-500/10   border-blue-500/20'   },
@@ -20,17 +15,30 @@ const STATUS: Record<string, { label: string; icon: React.ElementType; cls: stri
 };
 
 export function MyQuotesPage() {
+  const navigate = useNavigate();
   const [quotes, setQuotes] = useState<Quote[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    quoteService
-      .getMy()
-      .then(setQuotes)
-      .catch(() => setError('Não foi possível carregar seus orçamentos.'))
-      .finally(() => setLoading(false));
+  const load = useCallback(async (p: number) => {
+    if (p === 1) setLoading(true);
+    else setLoadingMore(true);
+    try {
+      const result = await quoteService.getMy(p, 10);
+      setQuotes(prev => p === 1 ? result.items : [...prev, ...result.items]);
+      setHasMore(p < result.pagination.totalPages);
+    } catch {
+      if (p === 1) setError('Não foi possível carregar seus orçamentos.');
+    } finally {
+      if (p === 1) setLoading(false);
+      else setLoadingMore(false);
+    }
   }, []);
+
+  useEffect(() => { load(page); }, [page, load]);
 
   const getRequest = (serviceRequestId: string | ServiceRequest) =>
     typeof serviceRequestId === 'object'
@@ -87,11 +95,18 @@ export function MyQuotesPage() {
             <FileText className="h-7 w-7 text-white/20" />
           </div>
           <h3 className="font-semibold text-white/60 mb-1">Nenhum orçamento enviado</h3>
-          <p className="text-sm text-white/30 max-w-xs">Acesse os pedidos disponíveis e envie sua proposta para conquistar clientes.</p>
+          <p className="text-sm text-white/30 max-w-xs mb-5">Acesse os pedidos disponíveis e envie sua proposta para conquistar clientes.</p>
+          <button
+            onClick={() => navigate('/prestador/pedidos')}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-violet-500/15 border border-violet-500/25 text-sm font-semibold text-violet-400 hover:bg-violet-500/25 hover:border-violet-400/40 transition-all"
+          >
+            <Search className="h-4 w-4" /> Ver pedidos disponíveis
+          </button>
         </motion.div>
       )}
 
       {!loading && !error && quotes.length > 0 && (
+        <>
         <div className="space-y-3">
           {quotes.map((quote, i) => {
             const { description, city } = getRequest(quote.serviceRequestId);
@@ -151,6 +166,18 @@ export function MyQuotesPage() {
             );
           })}
         </div>
+        {hasMore && (
+          <div className="mt-4 flex justify-center">
+            <button
+              onClick={() => setPage(p => p + 1)}
+              disabled={loadingMore}
+              className="px-5 py-2.5 rounded-xl border border-white/10 bg-white/5 text-sm font-semibold text-white/60 hover:bg-white/10 hover:border-white/20 hover:text-white/80 disabled:opacity-50 transition-all"
+            >
+              {loadingMore ? 'Carregando...' : 'Carregar mais'}
+            </button>
+          </div>
+        )}
+        </>
       )}
     </div>
   );

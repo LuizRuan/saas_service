@@ -123,7 +123,7 @@ async function buildClientNotifications(): Promise<AppNotification[]> {
   const notifications: AppNotification[] = [];
 
   if (quotesRes.status === 'fulfilled') {
-    quotesRes.value
+    quotesRes.value.items
       .filter(q => q.status === 'sent')
       .forEach(q => {
         const reqId = idOf(q.serviceRequestId as string | { _id?: string });
@@ -140,7 +140,7 @@ async function buildClientNotifications(): Promise<AppNotification[]> {
   }
 
   if (ordersRes.status === 'fulfilled') {
-    ordersRes.value.forEach(o => {
+    ordersRes.value.items.forEach(o => {
       const href = `/cliente/ordens/${o._id}`;
       if (o.status === 'created') {
         notifications.push({
@@ -207,8 +207,8 @@ async function buildProviderNotifications(): Promise<AppNotification[]> {
   const [availableRes, quotesRes, ordersRes, paymentsRes] = results;
   const notifications: AppNotification[] = [];
 
-  if (availableRes.status === 'fulfilled' && availableRes.value.length > 0) {
-    const count = availableRes.value.length;
+  if (availableRes.status === 'fulfilled' && availableRes.value.items.length > 0) {
+    const count = availableRes.value.items.length;
     notifications.push({
       id: 'available_requests',
       type: 'new_request',
@@ -220,7 +220,7 @@ async function buildProviderNotifications(): Promise<AppNotification[]> {
   }
 
   if (quotesRes.status === 'fulfilled') {
-    quotesRes.value
+    quotesRes.value.items
       .filter(q => q.status === 'accepted')
       .forEach(q => {
         const reqId = idOf(q.serviceRequestId as string | { _id?: string });
@@ -237,7 +237,7 @@ async function buildProviderNotifications(): Promise<AppNotification[]> {
   }
 
   if (ordersRes.status === 'fulfilled') {
-    ordersRes.value.forEach(o => {
+    ordersRes.value.items.forEach(o => {
       const href = `/prestador/ordens/${o._id}`;
       if (o.status === 'scheduled') {
         notifications.push({

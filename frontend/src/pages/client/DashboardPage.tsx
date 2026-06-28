@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
@@ -6,7 +6,7 @@ import api from '@/lib/axios';
 import {
   FileText, ClipboardList, CreditCard, Plus,
   Compass, ArrowRight, Sparkles, Star, TrendingUp,
-  Zap,
+  Zap, RefreshCw,
 } from 'lucide-react';
 
 const fadeUp = (delay = 0) => ({
@@ -55,10 +55,13 @@ export function ClientDashboardPage() {
   const { user } = useAuth();
   const firstName = user?.name?.split(' ')[0] ?? 'usuário';
   const [statsLoading, setStatsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [requestCount, setRequestCount] = useState<number | null>(null);
   const [orderCount, setOrderCount] = useState<number | null>(null);
 
-  useEffect(() => {
+  const fetchStats = useCallback((initial = false) => {
+    if (initial) setStatsLoading(true);
+    else setRefreshing(true);
     const controller = new AbortController();
     Promise.all([
       api.get('/service-requests/my', { signal: controller.signal }),
@@ -73,9 +76,14 @@ export function ClientDashboardPage() {
       setOrderCount(0);
     }).finally(() => {
       setStatsLoading(false);
+      setRefreshing(false);
     });
     return () => controller.abort();
   }, []);
+
+  useEffect(() => {
+    return fetchStats(true);
+  }, [fetchStats]);
 
   return (
     <div className="relative max-w-5xl mx-auto">
@@ -85,13 +93,24 @@ export function ClientDashboardPage() {
 
       {/* ── Welcome ─────────────────────────────── */}
       <motion.div {...fadeUp(0)} className="mb-10">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-500/15 border border-emerald-500/20">
-            <Sparkles className="h-3.5 w-3.5 text-emerald-400" />
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <div className="flex items-center gap-2">
+            <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-500/15 border border-emerald-500/20">
+              <Sparkles className="h-3.5 w-3.5 text-emerald-400" />
+            </div>
+            <span className="text-xs font-semibold text-emerald-400/80 uppercase tracking-widest">
+              Bem-vindo de volta
+            </span>
           </div>
-          <span className="text-xs font-semibold text-emerald-400/80 uppercase tracking-widest">
-            Bem-vindo de volta
-          </span>
+          <button
+            onClick={() => fetchStats(false)}
+            disabled={refreshing || statsLoading}
+            className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/50 hover:text-white/80 hover:border-white/20 transition-all disabled:opacity-40"
+            aria-label="Atualizar estatísticas"
+          >
+            <RefreshCw className={`h-3 w-3 ${refreshing ? 'animate-spin' : ''}`} />
+            Atualizar
+          </button>
         </div>
 
         <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-2">

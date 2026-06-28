@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import {
   ClipboardList, ArrowLeft, AlertCircle,
   Play, CheckCircle2, Loader2, Calendar, Clock, Info,
+  Camera, Upload, X,
 } from 'lucide-react';
 import { orderService } from '@/services/order.service';
 import { fadeUp } from '@/lib/animations';
@@ -28,6 +29,11 @@ export function ProviderOrderDetailPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [actionError, setActionError] = useState('');
   const [reloadKey, setReloadKey] = useState(0);
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [photoType, setPhotoType] = useState<'before' | 'after'>('before');
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoError, setPhotoError] = useState('');
+  const [photoSuccess, setPhotoSuccess] = useState('');
 
   useEffect(() => {
     if (!id) return;
@@ -55,6 +61,23 @@ export function ProviderOrderDetailPage() {
       }
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const handleUploadPhotos = async () => {
+    if (!id || photoFiles.length === 0) return;
+    setPhotoUploading(true);
+    setPhotoError('');
+    setPhotoSuccess('');
+    try {
+      await orderService.updatePhotos(id, photoType, photoFiles);
+      setPhotoFiles([]);
+      setPhotoSuccess(`Fotos "${photoType === 'before' ? 'antes' : 'depois'}" enviadas com sucesso!`);
+      setReloadKey(n => n + 1);
+    } catch {
+      setPhotoError('Não foi possível enviar as fotos. Tente novamente.');
+    } finally {
+      setPhotoUploading(false);
     }
   };
 
@@ -211,6 +234,89 @@ export function ProviderOrderDetailPage() {
               </InfoRow>
             )}
           </motion.div>
+
+          {/* Photo upload — available when in_progress or waiting_approval */}
+          {(order.status === 'in_progress' || order.status === 'waiting_approval') && (
+            <motion.div {...fadeUp(0.35)} className="rounded-2xl border border-white/8 p-5 space-y-4" style={{ background: 'rgba(255,255,255,0.03)' }}>
+              <div className="flex items-center gap-2">
+                <Camera className="h-4 w-4 text-white/40" />
+                <p className="text-xs font-semibold text-white/40 uppercase tracking-widest">Fotos do serviço</p>
+              </div>
+
+              {photoError && (
+                <div className="flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3">
+                  <AlertCircle className="h-4 w-4 text-red-400 shrink-0" />
+                  <p className="text-xs text-red-300">{photoError}</p>
+                </div>
+              )}
+              {photoSuccess && (
+                <div className="flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                  <p className="text-xs text-emerald-300">{photoSuccess}</p>
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                {(['before', 'after'] as const).map(t => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setPhotoType(t)}
+                    className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all ${
+                      photoType === t
+                        ? 'border-orange-500/40 bg-orange-500/15 text-orange-400'
+                        : 'border-white/10 bg-white/5 text-white/40 hover:text-white/60'
+                    }`}
+                  >
+                    {t === 'before' ? 'Antes' : 'Depois'}
+                  </button>
+                ))}
+              </div>
+
+              <label className="flex items-center gap-2 cursor-pointer rounded-xl border border-dashed border-white/15 bg-white/3 px-4 py-3 hover:border-white/30 transition-all">
+                <Upload className="h-4 w-4 text-white/35" />
+                <span className="text-sm text-white/40">Selecionar fotos</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={e => {
+                    const files = Array.from(e.target.files ?? []);
+                    setPhotoFiles(prev => [...prev, ...files]);
+                    e.target.value = '';
+                  }}
+                />
+              </label>
+
+              {photoFiles.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {photoFiles.map((f, i) => (
+                    <div key={i} className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5">
+                      <span className="text-xs text-white/60 truncate max-w-[120px]">{f.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => setPhotoFiles(prev => prev.filter((_, idx) => idx !== i))}
+                        className="text-white/30 hover:text-white/60 transition-colors"
+                        aria-label="Remover foto"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <button
+                onClick={handleUploadPhotos}
+                disabled={photoUploading || photoFiles.length === 0}
+                className="flex items-center gap-2 rounded-xl bg-orange-600/20 border border-orange-500/30 hover:bg-orange-600/30 text-orange-400 text-sm font-semibold px-4 py-2.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {photoUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                Enviar {photoFiles.length > 0 ? `(${photoFiles.length})` : ''} foto{photoFiles.length !== 1 ? 's' : ''}
+              </button>
+            </motion.div>
+          )}
         </>
       )}
     </div>

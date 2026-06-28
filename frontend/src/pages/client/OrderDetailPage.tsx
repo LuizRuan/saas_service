@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ClipboardList, ArrowLeft, AlertCircle, CreditCard,
-  CheckCircle2, Clock, MapPin, Calendar, Loader2,
+  CheckCircle2, Clock, MapPin, Calendar, Loader2, Star, ShieldAlert,
 } from 'lucide-react';
 import { orderService } from '@/services/order.service';
 import { paymentService } from '@/services/payment.service';
+import { reviewService } from '@/services/review.service';
+import { disputeService } from '@/services/dispute.service';
 import type { Payment } from '@/services/payment.service';
 import { fadeUp } from '@/lib/animations';
 import { formatCurrency, formatDate, formatDateTime } from '@/lib/utils';
@@ -30,6 +32,7 @@ function getPaymentOrderId(orderId: Payment['orderId']): string {
 
 export function OrderDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [order, setOrder] = useState<Order | null>(null);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,15 +40,23 @@ export function OrderDetailPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [actionError, setActionError] = useState('');
   const [reloadKey, setReloadKey] = useState(0);
+  const [hasReview, setHasReview] = useState(false);
+  const [showDisputeForm, setShowDisputeForm] = useState(false);
+  const [disputeReason, setDisputeReason] = useState('');
+  const [disputeDesc, setDisputeDesc] = useState('');
+  const [disputeSubmitting, setDisputeSubmitting] = useState(false);
+  const [disputeError, setDisputeError] = useState('');
+  const [disputeSuccess, setDisputeSuccess] = useState(false);
 
   useEffect(() => {
     if (!id) return;
     setLoading(true);
     setError('');
-    Promise.all([orderService.getById(id), paymentService.getMy()])
-      .then(([orderData, paymentsData]) => {
+    Promise.all([orderService.getById(id), paymentService.getMy(), reviewService.getMy()])
+      .then(([orderData, paymentsData, reviews]) => {
         setOrder(orderData);
         setPayments(paymentsData);
+        setHasReview(reviews.items.some(r => r.orderId === id));
       })
       .catch(() => setError('Não foi possível carregar os detalhes da ordem.'))
       .finally(() => setLoading(false));
@@ -98,6 +109,21 @@ export function OrderDetailPage() {
       setActionError(msg.toLowerCase().includes('already') ? 'Pagamento já realizado.' : 'Não foi possível processar o pagamento restante.');
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const handleOpenDispute = async () => {
+    if (!id || !disputeReason.trim() || !disputeDesc.trim()) return;
+    setDisputeSubmitting(true);
+    setDisputeError('');
+    try {
+      await disputeService.create({ orderId: id, reason: disputeReason.trim(), description: disputeDesc.trim() });
+      setDisputeSuccess(true);
+      setShowDisputeForm(false);
+    } catch (err: any) {
+      setDisputeError(err?.response?.data?.message ?? 'Não foi possível abrir a disputa.');
+    } finally {
+      setDisputeSubmitting(false);
     }
   };
 
@@ -215,7 +241,81 @@ export function OrderDetailPage() {
                 Pagar restante simulado — {formatCurrency(remainingAmount)}
               </button>
             )}
+            {order.status === 'completed' && !hasReview && (
+              <button
+                onClick={() => navigate(`/cliente/ordens/${id}/avaliar`)}
+                className="flex items-center gap-2 rounded-xl bg-amber-600/20 border border-amber-500/30 hover:bg-amber-600/30 text-amber-400 text-sm font-semibold px-4 py-2.5 transition-all"
+              >
+                <Star className="h-4 w-4" />
+                Avaliar prestador
+              </button>
+            )}
+            {order.status === 'completed' && hasReview && (
+              <span className="flex items-center gap-1.5 text-xs text-emerald-400/70 border border-emerald-500/20 rounded-xl px-3 py-2">
+                <Star className="h-3.5 w-3.5 fill-emerald-400" /> Avaliação enviada
+              </span>
+            )}
+            {(order.status === 'in_progress' || order.status === 'completed') && !disputeSuccess && (
+              <button
+                onClick={() => setShowDisputeForm(v => !v)}
+                className="flex items-center gap-2 rounded-xl bg-red-600/15 border border-red-500/25 hover:bg-red-600/25 text-red-400 text-sm font-semibold px-4 py-2.5 transition-all"
+              >
+                <ShieldAlert className="h-4 w-4" />
+                Abrir disputa
+              </button>
+            )}
+            {disputeSuccess && (
+              <span className="flex items-center gap-1.5 text-xs text-red-400/70 border border-red-500/20 rounded-xl px-3 py-2">
+                <ShieldAlert className="h-3.5 w-3.5" /> Disputa aberta
+              </span>
+            )}
           </motion.div>
+
+          {/* Dispute form */}
+          {showDisputeForm && (
+            <motion.div {...fadeUp(0.05)}
+              className="rounded-2xl border border-red-500/20 p-5 space-y-4"
+              style={{ background: 'rgba(239,68,68,0.05)' }}>
+              <p className="text-sm font-semibold text-red-300">Abrir disputa</p>
+              {disputeError && (
+                <div className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/10 p-3">
+                  <AlertCircle className="h-4 w-4 text-red-400 shrink-0" />
+                  <p className="text-xs text-red-300">{disputeError}</p>
+                </div>
+              )}
+              <input
+                value={disputeReason}
+                onChange={e => setDisputeReason(e.target.value)}
+                placeholder="Motivo (ex: serviço não concluído, produto danificado...)"
+                maxLength={200}
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/20 outline-none focus:border-red-500/40 transition-all"
+              />
+              <textarea
+                value={disputeDesc}
+                onChange={e => setDisputeDesc(e.target.value)}
+                placeholder="Descreva o problema em detalhes..."
+                rows={3}
+                maxLength={2000}
+                className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-white/20 outline-none focus:border-red-500/40 transition-all resize-none"
+              />
+              <div className="flex gap-3">
+                <button
+                  onClick={handleOpenDispute}
+                  disabled={disputeSubmitting || !disputeReason.trim() || !disputeDesc.trim()}
+                  className="flex items-center gap-2 rounded-xl bg-red-600/20 border border-red-500/30 hover:bg-red-600/30 text-red-400 text-sm font-semibold px-4 py-2.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {disputeSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldAlert className="h-4 w-4" />}
+                  Confirmar
+                </button>
+                <button
+                  onClick={() => { setShowDisputeForm(false); setDisputeError(''); }}
+                  className="rounded-xl border border-white/10 text-white/40 hover:text-white/70 text-sm px-4 py-2.5 transition-all"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </motion.div>
+          )}
 
           {/* Service info */}
           {sr && (

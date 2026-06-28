@@ -3,6 +3,8 @@ import { AuthenticatedRequest, DisputeStatus } from '../types';
 import { adminService } from '../services/admin.service';
 import { sendSuccess } from '../utils/response';
 import { parsePagination } from '../utils/pagination';
+import { ValidationError } from '../utils/errors';
+import { blockUserSchema, updateDisputeStatusSchema } from '../schemas/admin.schema';
 
 class AdminController {
   async getStats(req: AuthenticatedRequest, res: Response): Promise<void> {
@@ -24,21 +26,23 @@ class AdminController {
 
   async approveProvider(req: AuthenticatedRequest, res: Response): Promise<void> {
     const id = String(req.params['id']);
-    const profile = await adminService.approveProvider(id);
+    const profile = await adminService.approveProvider(id, req.user!.userId);
     sendSuccess(res, profile, 'Prestador aprovado com sucesso!');
   }
 
   async blockProvider(req: AuthenticatedRequest, res: Response): Promise<void> {
     const id = String(req.params['id']);
-    const profile = await adminService.blockProvider(id);
+    const profile = await adminService.blockProvider(id, req.user!.userId);
     sendSuccess(res, profile, 'Prestador bloqueado com sucesso!');
   }
 
   async blockUser(req: AuthenticatedRequest, res: Response): Promise<void> {
     const id = String(req.params['id']);
     const adminId = String(req.user!.userId);
-    const { durationDays, reason } = req.body;
-    const user = await adminService.blockUser(id, adminId, Number(durationDays), reason as string | undefined);
+    const parsed = blockUserSchema.safeParse(req.body);
+    if (!parsed.success) throw new ValidationError('Dados inválidos', parsed.error.errors.map(e => ({ field: e.path.join('.'), message: e.message })));
+    const { durationDays, reason } = parsed.data;
+    const user = await adminService.blockUser(id, adminId, durationDays, reason);
     sendSuccess(res, user, 'Usuario bloqueado com sucesso!');
   }
 
@@ -88,8 +92,10 @@ class AdminController {
 
   async updateDisputeStatus(req: AuthenticatedRequest, res: Response): Promise<void> {
     const id = String(req.params['id']);
-    const { status, adminNotes } = req.body;
-    const dispute = await adminService.updateDisputeStatus(id, status as DisputeStatus, adminNotes);
+    const parsed = updateDisputeStatusSchema.safeParse(req.body);
+    if (!parsed.success) throw new ValidationError('Dados inválidos', parsed.error.errors.map(e => ({ field: e.path.join('.'), message: e.message })));
+    const { status, adminNotes } = parsed.data;
+    const dispute = await adminService.updateDisputeStatus(id, status as DisputeStatus, adminNotes, req.user!.userId);
     sendSuccess(res, dispute, 'Status da disputa atualizado com sucesso!');
   }
 }

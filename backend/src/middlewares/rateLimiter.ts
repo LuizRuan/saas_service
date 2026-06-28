@@ -23,3 +23,27 @@ export const generalRateLimiter = rateLimit({
   },
   skip: () => process.env.NODE_ENV === 'test',
 });
+
+export const signupRateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hora
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Muitas tentativas de cadastro. Tente novamente em 1 hora.',
+  },
+  skip: () => process.env.NODE_ENV === 'test',
+});
+
+export const refreshRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Muitas renovações de sessão. Tente novamente em 15 minutos.',
+  },
+  skip: () => process.env.NODE_ENV === 'test',
+});

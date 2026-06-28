@@ -2,10 +2,13 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import compression from 'compression';
+import cookieParser from 'cookie-parser';
 import 'express-async-errors';
 
 import { env } from './config/env';
 import { errorHandler } from './middlewares/errorHandler';
+import { generalRateLimiter } from './middlewares/rateLimiter';
 import routes from './routes';
 
 const app = express();
@@ -19,7 +22,26 @@ const ALLOWED_ORIGINS = new Set([
 ].filter(Boolean));
 
 // Middlewares globais
-app.use(helmet());
+app.use(compression());
+app.use(helmet({
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true,
+  },
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:', 'https:'],
+      connectSrc: ["'self'", env.FRONTEND_URL],
+      frameSrc: ["'none'"],
+      objectSrc: ["'none'"],
+    },
+  },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+}));
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -33,8 +55,9 @@ app.use(
     credentials: true,
   })
 );
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+app.use(express.json({ limit: '500kb' }));
+app.use(express.urlencoded({ extended: true, limit: '500kb' }));
 
 // Logging
 if (env.NODE_ENV !== 'test') {
@@ -42,7 +65,15 @@ if (env.NODE_ENV !== 'test') {
 }
 
 // Uploads locais (MVP)
-app.use('/uploads', express.static('uploads'));
+app.use('/uploads', express.static('uploads', {
+  setHeaders(res) {
+    res.setHeader('Content-Disposition', 'attachment');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+  },
+}));
+
+// Rate limit global (antes das rotas)
+app.use('/api', generalRateLimiter);
 
 // Rotas
 app.use('/api', routes);

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -32,16 +32,28 @@ const STATUS: Record<string, { label: string; cls: string }> = {
 export function MyRequestsPage() {
   const navigate = useNavigate();
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    serviceRequestService
-      .getMy()
-      .then(setRequests)
-      .catch(() => setError('Não foi possível carregar suas solicitações.'))
-      .finally(() => setLoading(false));
+  const load = useCallback(async (p: number) => {
+    if (p === 1) setLoading(true);
+    else setLoadingMore(true);
+    try {
+      const result = await serviceRequestService.getMy(p, 10);
+      setRequests(prev => p === 1 ? result.items : [...prev, ...result.items]);
+      setHasMore(p < result.pagination.totalPages);
+    } catch {
+      if (p === 1) setError('Não foi possível carregar suas solicitações.');
+    } finally {
+      if (p === 1) setLoading(false);
+      else setLoadingMore(false);
+    }
   }, []);
+
+  useEffect(() => { load(page); }, [page, load]);
 
   const getCategoryName = (categoryId: string | Category) =>
     typeof categoryId === 'object' ? categoryId.name : '—';
@@ -134,6 +146,7 @@ export function MyRequestsPage() {
 
       {/* List */}
       {!loading && !error && requests.length > 0 && (
+        <>
         <div className="space-y-3">
           {requests.map((req, i) => {
             const statusCfg = STATUS[req.status] ?? STATUS.open;
@@ -184,6 +197,18 @@ export function MyRequestsPage() {
             );
           })}
         </div>
+        {hasMore && (
+          <div className="mt-4 flex justify-center">
+            <button
+              onClick={() => setPage(p => p + 1)}
+              disabled={loadingMore}
+              className="px-5 py-2.5 rounded-xl border border-white/10 bg-white/5 text-sm font-semibold text-white/60 hover:bg-white/10 hover:border-white/20 hover:text-white/80 disabled:opacity-50 transition-all"
+            >
+              {loadingMore ? 'Carregando...' : 'Carregar mais'}
+            </button>
+          </div>
+        )}
+        </>
       )}
     </div>
   );

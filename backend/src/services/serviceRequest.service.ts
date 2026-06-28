@@ -17,6 +17,7 @@ interface CreateServiceRequestInput {
   desiredDate?: Date;
   desiredDateEnd?: Date;
   urgency?: string;
+  budget?: number;
 }
 
 class ServiceRequestService {
@@ -25,26 +26,39 @@ class ServiceRequestService {
     return request;
   }
 
-  async getMy(clientId: string) {
-    return ServiceRequest.find({ clientId })
-      .populate('categoryId', 'name slug')
-      .sort({ createdAt: -1 });
+  async getMy(clientId: string, { page, limit, skip }: { page: number; limit: number; skip: number }) {
+    const [items, total] = await Promise.all([
+      ServiceRequest.find({ clientId })
+        .populate('categoryId', 'name slug')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      ServiceRequest.countDocuments({ clientId }),
+    ]);
+    return { items, pagination: { total, page, limit, totalPages: Math.ceil(total / limit) } };
   }
 
-  async getAvailable(providerId: string) {
+  async getAvailable(providerId: string, { page, limit, skip }: { page: number; limit: number; skip: number }) {
     const profile = await ProviderProfile.findOne({ userId: providerId });
     if (!profile || profile.status !== 'approved') {
       throw new AppError('Apenas prestadores aprovados podem ver solicitações disponíveis', 403);
     }
 
-    return ServiceRequest.find({
+    const filter = {
       status: { $in: ['open', 'quoted'] },
       city: { $in: profile.cities },
       categoryId: { $in: profile.categories },
-    })
-      .select('-fullAddress')
-      .populate('categoryId', 'name slug')
-      .sort({ createdAt: -1 });
+    };
+    const [items, total] = await Promise.all([
+      ServiceRequest.find(filter)
+        .select('-fullAddress')
+        .populate('categoryId', 'name slug')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      ServiceRequest.countDocuments(filter),
+    ]);
+    return { items, pagination: { total, page, limit, totalPages: Math.ceil(total / limit) } };
   }
 
   async getById(requestId: string, requesterId: string, requesterRole: UserRole) {

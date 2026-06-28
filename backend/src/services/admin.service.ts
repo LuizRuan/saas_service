@@ -101,19 +101,41 @@ class AdminService {
     return { providers, total, page, limit };
   }
 
-  async approveProvider(profileId: string) {
-    const profile = await ProviderProfile.findById(profileId);
+  async approveProvider(profileId: string, adminId: string) {
+    const profile = await ProviderProfile.findById(profileId).populate<{ userId: { _id: mongoose.Types.ObjectId; name: string } }>('userId', 'name');
     if (!profile) throw new NotFoundError('Prestador');
+    const previousStatus = profile.status;
     profile.status = 'approved';
     await profile.save();
+    const admin = await User.findById(adminId).select('name');
+    AuditLog.create({
+      targetUserId: profile.userId._id,
+      targetUserName: (profile.userId as any).name ?? 'Desconhecido',
+      adminId: new mongoose.Types.ObjectId(adminId),
+      adminName: admin?.name ?? 'Desconhecido',
+      action: 'approve_provider',
+      previousStatus,
+      newStatus: 'approved',
+    }).catch(err => console.error('[audit]', err));
     return profile;
   }
 
-  async blockProvider(profileId: string) {
-    const profile = await ProviderProfile.findById(profileId);
+  async blockProvider(profileId: string, adminId: string) {
+    const profile = await ProviderProfile.findById(profileId).populate<{ userId: { _id: mongoose.Types.ObjectId; name: string } }>('userId', 'name');
     if (!profile) throw new NotFoundError('Prestador');
+    const previousStatus = profile.status;
     profile.status = 'blocked';
     await profile.save();
+    const admin = await User.findById(adminId).select('name');
+    AuditLog.create({
+      targetUserId: profile.userId._id,
+      targetUserName: (profile.userId as any).name ?? 'Desconhecido',
+      adminId: new mongoose.Types.ObjectId(adminId),
+      adminName: admin?.name ?? 'Desconhecido',
+      action: 'block_provider',
+      previousStatus,
+      newStatus: 'blocked',
+    }).catch(err => console.error('[audit]', err));
     return profile;
   }
 
@@ -311,12 +333,24 @@ class AdminService {
     return { disputes, total, page, limit };
   }
 
-  async updateDisputeStatus(disputeId: string, status: DisputeStatus, adminNotes?: string) {
-    const dispute = await Dispute.findById(disputeId);
+  async updateDisputeStatus(disputeId: string, status: DisputeStatus, adminNotes: string | undefined, adminId: string) {
+    const dispute = await Dispute.findById(disputeId).populate<{ openedBy: { _id: mongoose.Types.ObjectId; name: string } }>('openedBy', 'name');
     if (!dispute) throw new NotFoundError('Disputa');
+    const previousStatus = dispute.status;
     dispute.status = status;
     if (adminNotes !== undefined) dispute.adminNotes = adminNotes;
     await dispute.save();
+    const admin = await User.findById(adminId).select('name');
+    AuditLog.create({
+      targetUserId: (dispute.openedBy as any)._id ?? dispute.openedBy,
+      targetUserName: (dispute.openedBy as any).name ?? 'Desconhecido',
+      adminId: new mongoose.Types.ObjectId(adminId),
+      adminName: admin?.name ?? 'Desconhecido',
+      action: 'resolve_dispute',
+      previousStatus,
+      newStatus: status,
+      metadata: { disputeId, adminNotes },
+    }).catch(err => console.error('[audit]', err));
     return dispute;
   }
 }

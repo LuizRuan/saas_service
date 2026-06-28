@@ -1,6 +1,12 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-export type AuditAction = 'block_user' | 'unblock_user' | 'delete_user';
+export type AuditAction =
+  | 'block_user'
+  | 'unblock_user'
+  | 'delete_user'
+  | 'resolve_dispute'
+  | 'approve_provider'
+  | 'block_provider';
 
 export interface IAuditLog extends Document {
   targetUserId: mongoose.Types.ObjectId;
@@ -12,6 +18,7 @@ export interface IAuditLog extends Document {
   blockedUntil?: Date;
   previousStatus: string;
   newStatus: string;
+  metadata?: Record<string, any>;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -24,13 +31,14 @@ const auditLogSchema = new Schema<IAuditLog>(
     adminName:      { type: String, required: true },
     action: {
       type: String,
-      enum: ['block_user', 'unblock_user', 'delete_user'],
+      enum: ['block_user', 'unblock_user', 'delete_user', 'resolve_dispute', 'approve_provider', 'block_provider'],
       required: true,
     },
     reason:         { type: String },
     blockedUntil:   { type: Date },
     previousStatus: { type: String, required: true },
     newStatus:      { type: String, required: true },
+    metadata:       { type: Schema.Types.Mixed },
   },
   { timestamps: true }
 );

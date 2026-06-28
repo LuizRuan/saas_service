@@ -479,6 +479,144 @@ function HistoryModal({
   );
 }
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function formatTimeRemaining(blockedUntil?: string): string {
+  if (!blockedUntil) return 'sem prazo de expiração definido';
+  const ms = new Date(blockedUntil).getTime() - Date.now();
+  if (ms <= 0) return 'expirado';
+  const totalMinutes = Math.floor(ms / 60_000);
+  const days = Math.floor(totalMinutes / 1440);
+  const hours = Math.floor((totalMinutes % 1440) / 60);
+  const minutes = totalMinutes % 60;
+  const parts: string[] = [];
+  if (days > 0) parts.push(`${days} dia${days !== 1 ? 's' : ''}`);
+  if (hours > 0) parts.push(`${hours} hora${hours !== 1 ? 's' : ''}`);
+  if (minutes > 0 || parts.length === 0) parts.push(`${minutes} minuto${minutes !== 1 ? 's' : ''}`);
+  return parts.join(', ');
+}
+
+// ── UnblockModal ──────────────────────────────────────────────────────────────
+
+function UnblockModal({
+  user,
+  onClose,
+  onSuccess,
+}: {
+  user: AdminUser;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const timeRemaining = formatTimeRemaining(user.blockedUntil);
+  const hasExpiry = !!user.blockedUntil && new Date(user.blockedUntil).getTime() > Date.now();
+
+  async function handleUnblock() {
+    setLoading(true);
+    setError('');
+    try {
+      await adminService.unblockUser(user._id);
+      onSuccess();
+    } catch (e: any) {
+      setError(e?.response?.data?.message ?? 'Não foi possível desbloquear o usuário.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 16 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 16 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+        className="w-full max-w-md rounded-2xl border border-white/10 overflow-hidden shadow-2xl"
+        style={{ background: 'linear-gradient(135deg, #071a10 0%, #050e0a 100%)' }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-white/5">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+              <Unlock className="h-4 w-4 text-emerald-400" />
+            </div>
+            <h2 className="text-base font-bold text-white">Desbloquear usuário</h2>
+          </div>
+          <button onClick={onClose} className="text-white/30 hover:text-white transition-colors">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="px-6 pt-5 pb-6 space-y-4">
+          <p className="text-sm text-white/60">
+            Deseja desbloquear{' '}
+            <span className="text-white font-semibold">{user.name}</span>
+            {' '}agora?
+          </p>
+
+          {/* Time remaining info */}
+          <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/[0.07] p-4">
+            <div className="flex items-center gap-2 mb-1.5">
+              <Clock className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+              <span className="text-xs font-semibold text-emerald-300/80 uppercase tracking-wider">
+                {hasExpiry ? 'Desbloqueio automático em' : 'Prazo do bloqueio'}
+              </span>
+            </div>
+            {hasExpiry ? (
+              <>
+                <p className="text-sm font-bold text-emerald-300">{timeRemaining}</p>
+                <p className="text-xs text-white/30 mt-0.5">
+                  Expira em {formatDate(user.blockedUntil!)}
+                </p>
+              </>
+            ) : (
+              <p className="text-sm text-white/40">Bloqueio sem prazo de expiração definido.</p>
+            )}
+          </div>
+
+          <p className="text-xs text-white/35">
+            O usuário voltará a ter acesso completo à plataforma imediatamente.
+          </p>
+
+          {error && (
+            <div className="flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 p-3">
+              <AlertCircle className="h-4 w-4 text-red-400 shrink-0" />
+              <p className="text-xs text-red-300">{error}</p>
+            </div>
+          )}
+
+          <div className="flex gap-3 pt-1">
+            <button
+              onClick={onClose}
+              disabled={loading}
+              className="flex-1 rounded-xl border border-white/10 py-2.5 text-sm font-semibold text-white/50 hover:text-white hover:border-white/20 transition-all disabled:opacity-40"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleUnblock}
+              disabled={loading}
+              className="flex-1 rounded-xl border border-emerald-500/30 bg-emerald-500/15 py-2.5 text-sm font-semibold text-emerald-300 hover:bg-emerald-500/25 transition-all disabled:opacity-40"
+            >
+              {loading ? 'Desbloqueando...' : 'Desbloquear agora'}
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export function AdminUsersPage() {
@@ -491,6 +629,7 @@ export function AdminUsersPage() {
   const [total, setTotal] = useState(0);
 
   const [blockTarget, setBlockTarget] = useState<AdminUser | null>(null);
+  const [unblockTarget, setUnblockTarget] = useState<AdminUser | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null);
   const [historyTarget, setHistoryTarget] = useState<AdminUser | null>(null);
 
@@ -523,16 +662,13 @@ export function AdminUsersPage() {
     emitAdminRefresh();
   }
 
-  function handleUnblock(u: AdminUser) {
-    setActionError('');
-    adminService.unblockUser(u._id)
-      .then(() => { loadUsers(); emitAdminRefresh(); })
-      .catch((e: any) => {
-        setActionError(e?.response?.data?.message ?? 'Não foi possível desbloquear o usuário.');
-      });
+  function handleUnblockSuccess() {
+    setUnblockTarget(null);
+    loadUsers();
+    emitAdminRefresh();
   }
 
-  const isSelf = (u: AdminUser) => u._id === (authUser as any)?._id;
+  const isSelf = (u: AdminUser) => u._id === authUser?._id;
 
   return (
     <div className="space-y-6">
@@ -650,7 +786,7 @@ export function AdminUsersPage() {
                   )}
                   {!self && !isDeleted && u.status === 'blocked' && (
                     <button
-                      onClick={() => handleUnblock(u)}
+                      onClick={() => setUnblockTarget(u)}
                       className="flex items-center gap-1 rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-2 py-1 text-[11px] font-semibold text-emerald-400 hover:bg-emerald-500/20 transition-all"
                     >
                       <Unlock className="h-3 w-3" /> Desbloquear
@@ -683,6 +819,13 @@ export function AdminUsersPage() {
             user={blockTarget}
             onClose={() => setBlockTarget(null)}
             onSuccess={handleBlockSuccess}
+          />
+        )}
+        {unblockTarget && (
+          <UnblockModal
+            user={unblockTarget}
+            onClose={() => setUnblockTarget(null)}
+            onSuccess={handleUnblockSuccess}
           />
         )}
         {deleteTarget && (

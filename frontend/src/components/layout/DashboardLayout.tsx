@@ -29,6 +29,7 @@ function useNavItems() {
       { label: 'Minhas Solicitações', to: '/cliente/solicitacoes', icon: <FileText className="h-4 w-4" /> },
       { label: 'Explorar categorias', to: '/cliente/explorar', icon: <Compass className="h-4 w-4" /> },
       { label: 'Ordens', to: '/cliente/ordens', icon: <ClipboardList className="h-4 w-4" /> },
+      { label: 'Minhas Disputas', to: '/cliente/disputas', icon: <ShieldAlert className="h-4 w-4" /> },
       { label: 'Pagamentos', to: '/cliente/pagamentos', icon: <CreditCard className="h-4 w-4" /> },
       { label: 'Avaliações', to: '/cliente/avaliacoes', icon: <Star className="h-4 w-4" />, disabled: true },
     ] as NavItem[];
@@ -39,12 +40,14 @@ function useNavItems() {
       { label: 'Pedidos disponíveis', to: '/prestador/pedidos', icon: <Search className="h-4 w-4" /> },
       { label: 'Meus orçamentos', to: '/prestador/orcamentos', icon: <FileText className="h-4 w-4" /> },
       { label: 'Ordens', to: '/prestador/ordens', icon: <ClipboardList className="h-4 w-4" /> },
-      { label: 'Avaliações', to: '/prestador/avaliacoes', icon: <Star className="h-4 w-4" />, disabled: true },
+      { label: 'Avaliações', to: '/prestador/avaliacoes', icon: <Star className="h-4 w-4" /> },
     ] as NavItem[];
   }
   return [
     { label: 'Início', to: '/admin', icon: <Home className="h-4 w-4" /> },
     { label: 'Usuários', to: '/admin/usuarios', icon: <Users className="h-4 w-4" /> },
+    { label: 'Solicitações', to: '/admin/solicitacoes', icon: <FileText className="h-4 w-4" /> },
+    { label: 'Prestadores', to: '/admin/prestadores', icon: <Wrench className="h-4 w-4" /> },
     { label: 'Ordens', to: '/admin/ordens', icon: <ClipboardList className="h-4 w-4" /> },
     { label: 'Pagamentos', to: '/admin/pagamentos', icon: <CreditCard className="h-4 w-4" /> },
     { label: 'Disputas', to: '/admin/disputas', icon: <ShieldAlert className="h-4 w-4" /> },
@@ -91,7 +94,7 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
           </div>
         </Link>
         {onClose && (
-          <button onClick={onClose} className="text-white/30 hover:text-white md:hidden p-1 transition-colors">
+          <button onClick={onClose} aria-label="Fechar menu de navegação" className="text-white/30 hover:text-white md:hidden p-1 transition-colors">
             <X className="h-5 w-5" />
           </button>
         )}
@@ -231,6 +234,7 @@ export function DashboardLayout() {
           <div className="flex items-center gap-4">
             <button
               onClick={() => setSidebarOpen(true)}
+              aria-label="Abrir menu de navegação"
               className="text-white/30 hover:text-white md:hidden transition-colors p-1.5 rounded-lg hover:bg-white/5"
             >
               <Menu className="h-5 w-5" />

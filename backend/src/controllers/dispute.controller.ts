@@ -3,6 +3,7 @@ import { AuthenticatedRequest } from '../types';
 import { disputeService } from '../services/dispute.service';
 import { sendSuccess } from '../utils/response';
 import { buildFilePaths } from '../utils/upload';
+import { parsePagination } from '../utils/pagination';
 
 class DisputeController {
   async create(req: AuthenticatedRequest, res: Response): Promise<void> {
@@ -18,8 +19,9 @@ class DisputeController {
   }
 
   async getMy(req: AuthenticatedRequest, res: Response): Promise<void> {
-    const disputes = await disputeService.getMy(req.user!.userId);
-    sendSuccess(res, disputes);
+    const pagination = parsePagination(req.query);
+    const result = await disputeService.getMy(req.user!.userId, req.user!.role, pagination);
+    sendSuccess(res, result);
   }
 
   async getById(req: AuthenticatedRequest, res: Response): Promise<void> {

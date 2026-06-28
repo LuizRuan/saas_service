@@ -174,12 +174,14 @@ export function NotificationsModal({ open, onClose, onLoaded }: NotificationsMod
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-1.5 px-6 py-3 border-b border-white/5">
+            <div role="tablist" aria-label="Filtros de notificações" className="flex gap-1.5 px-6 py-3 border-b border-white/5">
               {(['all', 'important', 'recent'] as Tab[]).map(t => {
                 const labels = { all: 'Todas', important: 'Importantes', recent: 'Recentes' };
                 return (
                   <button
                     key={t}
+                    role="tab"
+                    aria-selected={tab === t}
                     onClick={() => setTab(t)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                       tab === t

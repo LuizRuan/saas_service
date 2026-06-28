@@ -86,6 +86,7 @@ class PaymentService {
   async getMy(userId: string, role: UserRole) {
     const filter = role === 'client' ? { clientId: userId } : { providerId: userId };
     return Payment.find(filter)
+      .select('type amount status orderId providerAmount createdAt')
       .populate('orderId', 'status serviceRequestId')
       .sort({ createdAt: -1 });
   }

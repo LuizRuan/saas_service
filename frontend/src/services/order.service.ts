@@ -1,9 +1,9 @@
 import api from '@/lib/axios';
-import type { ApiResponse, Order } from '@/types';
+import type { ApiResponse, Order, PaginatedResponse } from '@/types';
 
 export const orderService = {
-  async getMy(): Promise<Order[]> {
-    const res = await api.get<ApiResponse<Order[]>>('/orders/my');
+  async getMy(page = 1, limit = 10): Promise<PaginatedResponse<Order>> {
+    const res = await api.get<ApiResponse<PaginatedResponse<Order>>>('/orders/my', { params: { page, limit } });
     return res.data.data;
   },
 
@@ -14,6 +14,21 @@ export const orderService = {
 
   async updateStatus(id: string, status: string): Promise<Order> {
     const res = await api.patch<ApiResponse<Order>>(`/orders/${id}/status`, { status });
+    return res.data.data;
+  },
+
+  async updatePhotos(id: string, type: 'before' | 'after', files: File[]): Promise<Order> {
+    const form = new FormData();
+    form.append('type', type);
+    files.forEach(f => form.append('photos', f));
+    const res = await api.patch<ApiResponse<Order>>(`/orders/${id}/photos`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return res.data.data;
+  },
+
+  async updateSignature(id: string, type: 'client' | 'provider', signature: string): Promise<Order> {
+    const res = await api.patch<ApiResponse<Order>>(`/orders/${id}/signatures`, { type, signature });
     return res.data.data;
   },
 

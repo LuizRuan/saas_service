@@ -19,7 +19,7 @@ export function ForgotPasswordPage() {
       await api.post('/auth/forgot-password', { email });
       setSent(true);
     } catch {
-      setSent(true);
+      setError('Não foi possível enviar o e-mail. Tente novamente em alguns instantes.');
     } finally {
       setLoading(false);
     }

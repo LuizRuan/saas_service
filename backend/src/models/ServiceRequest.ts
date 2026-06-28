@@ -15,6 +15,7 @@ export interface IServiceRequest extends Document {
   urgency: Urgency;
   status: ServiceRequestStatus;
   selectedProviderId: Types.ObjectId | null;
+  budget?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -89,6 +90,11 @@ const serviceRequestSchema = new Schema<IServiceRequest>(
       ref: 'User',
       default: null,
     },
+    budget: {
+      type: Number,
+      min: 0,
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -106,6 +112,7 @@ serviceRequestSchema.index({ categoryId: 1 });
 serviceRequestSchema.index({ city: 1, status: 1 });
 serviceRequestSchema.index({ status: 1 });
 serviceRequestSchema.index({ selectedProviderId: 1 });
+serviceRequestSchema.index({ clientId: 1, status: 1 });
 
 export const ServiceRequest = mongoose.model<IServiceRequest>(
   'ServiceRequest',

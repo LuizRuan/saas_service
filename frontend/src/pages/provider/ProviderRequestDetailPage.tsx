@@ -46,7 +46,7 @@ export function ProviderRequestDetailPage() {
       .then(([req, myQuotes]) => {
         if (controller.signal.aborted) return;
         setRequest(req);
-        const found = myQuotes.find((q) => {
+        const found = myQuotes.items.find((q) => {
           const reqId = typeof q.serviceRequestId === 'object' ? q.serviceRequestId._id : q.serviceRequestId;
           return reqId === id;
         });

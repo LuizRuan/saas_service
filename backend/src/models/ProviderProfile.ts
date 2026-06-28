@@ -103,6 +103,7 @@ providerProfileSchema.index({ status: 1 });
 providerProfileSchema.index({ categories: 1 });
 providerProfileSchema.index({ cities: 1 });
 providerProfileSchema.index({ averageRating: -1 });
+providerProfileSchema.index({ status: 1, cities: 1 });
 
 export const ProviderProfile = mongoose.model<IProviderProfile>(
   'ProviderProfile',

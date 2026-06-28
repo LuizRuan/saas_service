@@ -90,6 +90,7 @@ export interface ServiceRequest {
   urgency: Urgency;
   status: ServiceRequestStatus;
   selectedProviderId: string | null;
+  budget?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -122,6 +123,12 @@ export interface Order {
   totalAmount?: number;
   depositAmount?: number;
   remainingAmount?: number;
+  startedAt?: string;
+  completedAt?: string;
+  notes?: string;
+  clientSignature?: string;
+  providerSignature?: string;
+  pdfUrl?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -145,18 +152,28 @@ export interface CreateServiceRequestData {
   budget?: number;
 }
 
-export interface ProviderSearchResult {
+export interface ProviderCard {
   _id: string;
   userId: { _id: string; name: string; email: string; city: string; state: string };
   professionalName: string;
-  bio: string;
+  bio?: string;
   categories: Category[];
   cities: string[];
   status: ProviderStatus;
   plan: string;
   averageRating: number;
   reviewCount: number;
-  completedServices: number;
+  completedServices?: number;
+}
+
+export interface ProviderSearchResponse {
+  providers: ProviderCard[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
 }
 
 export interface CreateQuoteData {
@@ -165,4 +182,53 @@ export interface CreateQuoteData {
   description?: string;
   estimatedTime?: string;
   warrantyDays?: number;
+}
+
+export interface Review {
+  _id: string;
+  orderId: string;
+  clientId: string;
+  providerId: string;
+  rating: number;
+  comment: string;
+  punctuality?: number;
+  quality?: number;
+  communication?: number;
+  cleanliness?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateReviewData {
+  orderId: string;
+  rating: number;
+  comment?: string;
+  punctuality?: number;
+  quality?: number;
+  communication?: number;
+  cleanliness?: number;
+}
+
+export interface Dispute {
+  _id: string;
+  orderId: string | Order;
+  openedBy: string | User;
+  reason: string;
+  description: string;
+  evidencePhotos: string[];
+  status: 'open' | 'under_review' | 'resolved_client' | 'resolved_provider' | 'refunded';
+  adminNotes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateDisputeData {
+  orderId: string;
+  reason: string;
+  description: string;
+}
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  pagination: { total: number; page: number; limit: number; totalPages: number };
 }

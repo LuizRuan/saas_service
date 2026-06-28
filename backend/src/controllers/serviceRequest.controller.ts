@@ -3,10 +3,11 @@ import { AuthenticatedRequest } from '../types';
 import { serviceRequestService } from '../services/serviceRequest.service';
 import { sendSuccess } from '../utils/response';
 import { buildFilePaths } from '../utils/upload';
+import { parsePagination } from '../utils/pagination';
 
 class ServiceRequestController {
   async create(req: AuthenticatedRequest, res: Response): Promise<void> {
-    const { categoryId, city, neighborhood, approximateAddress, fullAddress, description, desiredDate, desiredDateEnd, urgency } = req.body;
+    const { categoryId, city, neighborhood, approximateAddress, fullAddress, description, desiredDate, desiredDateEnd, urgency, budget } = req.body;
     const files = (req.files as Express.Multer.File[]) ?? [];
     const photos = buildFilePaths(files, 'service-requests');
 
@@ -22,19 +23,22 @@ class ServiceRequestController {
       desiredDate: desiredDate ? new Date(desiredDate) : undefined,
       desiredDateEnd: desiredDateEnd ? new Date(desiredDateEnd) : undefined,
       urgency,
+      budget: budget != null ? Number(budget) : undefined,
     });
     sendSuccess(res, request, 'Solicitação criada com sucesso!', 201);
   }
 
 
   async getMy(req: AuthenticatedRequest, res: Response): Promise<void> {
-    const requests = await serviceRequestService.getMy(req.user!.userId);
-    sendSuccess(res, requests);
+    const pagination = parsePagination(req.query);
+    const result = await serviceRequestService.getMy(req.user!.userId, pagination);
+    sendSuccess(res, result);
   }
 
   async getAvailable(req: AuthenticatedRequest, res: Response): Promise<void> {
-    const requests = await serviceRequestService.getAvailable(req.user!.userId);
-    sendSuccess(res, requests);
+    const pagination = parsePagination(req.query);
+    const result = await serviceRequestService.getAvailable(req.user!.userId, pagination);
+    sendSuccess(res, result);
   }
 
   async getById(req: AuthenticatedRequest, res: Response): Promise<void> {

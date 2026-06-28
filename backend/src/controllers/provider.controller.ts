@@ -2,6 +2,8 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from '../types';
 import { providerService } from '../services/provider.service';
 import { sendSuccess } from '../utils/response';
+import { ValidationError } from '../utils/errors';
+import { updateProviderProfileSchema } from '../schemas/provider.schema';
 
 class ProviderController {
   async search(req: AuthenticatedRequest, res: Response): Promise<void> {
@@ -28,10 +30,9 @@ class ProviderController {
 
   async updateMe(req: AuthenticatedRequest, res: Response): Promise<void> {
     const userId = req.user!.userId;
-    const { professionalName, bio, categories, cities, neighborhoods } = req.body;
-    const result = await providerService.updateMe(userId, {
-      professionalName, bio, categories, cities, neighborhoods,
-    });
+    const parsed = updateProviderProfileSchema.safeParse(req.body);
+    if (!parsed.success) throw new ValidationError('Dados inválidos', parsed.error.errors.map(e => ({ field: e.path.join('.'), message: e.message })));
+    const result = await providerService.updateMe(userId, parsed.data);
     sendSuccess(res, result, 'Perfil atualizado com sucesso');
   }
 }

@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Search, FileText, ClipboardList, Star, AlertTriangle,
-  ArrowRight, Zap, CheckCircle2, TrendingUp, Users,
+  ArrowRight, Zap, CheckCircle2, TrendingUp, Users, RefreshCw,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import api from '@/lib/axios';
@@ -53,9 +53,11 @@ export function ProviderDashboardPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState<ProviderStats | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const firstName = user?.name?.split(' ')[0] ?? 'profissional';
 
-  useEffect(() => {
+  const fetchStats = useCallback((initial = false) => {
+    if (!initial) setRefreshing(true);
     const controller = new AbortController();
     Promise.all([
       api.get('/providers/me', { signal: controller.signal }),
@@ -75,9 +77,15 @@ export function ProviderDashboardPage() {
       if (!controller.signal.aborted) {
         setStats({ availableRequests: 0, pendingQuotes: 0, acceptedQuotes: 0, profileStatus: 'pending' });
       }
+    }).finally(() => {
+      setRefreshing(false);
     });
     return () => controller.abort();
   }, []);
+
+  useEffect(() => {
+    return fetchStats(true);
+  }, [fetchStats]);
 
   const isPending = stats?.profileStatus === 'pending' || !stats;
   const isApproved = stats?.profileStatus === 'approved';
@@ -121,11 +129,22 @@ export function ProviderDashboardPage() {
 
       {/* ── Welcome ────────────────────────────── */}
       <motion.div {...fadeUp(0.05)} className="mb-8">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-500/15 border border-blue-500/20">
-            <Zap className="h-3.5 w-3.5 text-blue-400" />
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <div className="flex items-center gap-2">
+            <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-500/15 border border-blue-500/20">
+              <Zap className="h-3.5 w-3.5 text-blue-400" />
+            </div>
+            <span className="text-xs font-semibold text-blue-400/80 uppercase tracking-widest">Área do prestador</span>
           </div>
-          <span className="text-xs font-semibold text-blue-400/80 uppercase tracking-widest">Área do prestador</span>
+          <button
+            onClick={() => fetchStats(false)}
+            disabled={refreshing}
+            className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-white/50 hover:text-white/80 hover:border-white/20 transition-all disabled:opacity-40"
+            aria-label="Atualizar estatísticas"
+          >
+            <RefreshCw className={`h-3 w-3 ${refreshing ? 'animate-spin' : ''}`} />
+            Atualizar
+          </button>
         </div>
         <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-2">
           Olá, <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300">{firstName}!</span>

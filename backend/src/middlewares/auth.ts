@@ -9,13 +9,14 @@ export function authenticate(
   _res: Response,
   next: NextFunction
 ): void {
-  const authHeader = req.headers.authorization;
+  // Cookie takes priority; fall back to Bearer header for Postman/curl in dev
+  const token =
+    req.cookies?.accessToken ??
+    req.headers.authorization?.replace('Bearer ', '');
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (!token) {
     throw new UnauthorizedError('Token não fornecido');
   }
-
-  const token = authHeader.split(' ')[1];
 
   try {
     const decoded = jwt.verify(token, env.JWT_SECRET) as JwtPayload;
@@ -26,22 +27,16 @@ export function authenticate(
   }
 }
 
-/**
- * Middleware opcional de autenticação.
- * Não lança erro se o token não for fornecido, mas se for fornecido e inválido, lança.
- */
 export function optionalAuth(
   req: AuthenticatedRequest,
   _res: Response,
   next: NextFunction
 ): void {
-  const authHeader = req.headers.authorization;
+  const token =
+    req.cookies?.accessToken ??
+    req.headers.authorization?.replace('Bearer ', '');
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return next();
-  }
-
-  const token = authHeader.split(' ')[1];
+  if (!token) return next();
 
   try {
     const decoded = jwt.verify(token, env.JWT_SECRET) as JwtPayload;

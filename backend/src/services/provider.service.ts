@@ -99,7 +99,7 @@ class ProviderService {
   }
 
   async getById(providerId: string) {
-    const profile = await ProviderProfile.findOne({ userId: providerId })
+    const profile = await ProviderProfile.findOne({ userId: providerId, status: 'approved' })
       .populate('userId', 'name email city state')
       .populate('categories', 'name slug');
 
@@ -110,15 +110,9 @@ class ProviderService {
       .sort({ createdAt: -1 })
       .limit(10);
 
-    const ratingAgg = await Review.aggregate([
-      { $match: { providerId: profile.userId } },
-      { $group: { _id: null, avg: { $avg: '$rating' }, count: { $sum: 1 } } },
-    ]);
-
     return {
       ...profile.toObject(),
-      averageRating: ratingAgg[0]?.avg ?? 0,
-      reviewCount: ratingAgg[0]?.count ?? 0,
+      reviewCount: profile.totalReviews,
       reviews,
     };
   }
