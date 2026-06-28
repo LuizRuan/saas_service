@@ -1,4 +1,4 @@
-import { useState, useEffect, type ReactNode } from 'react';
+import { useState, useEffect, Suspense, type ReactNode } from 'react';
 import { PageErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -291,7 +291,14 @@ export function DashboardLayout() {
             className="min-h-full p-4 sm:p-6 lg:p-8"
           >
             <PageErrorBoundary>
-              <Outlet />
+              <Suspense fallback={
+                <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4">
+                  <div className="h-8 w-8 rounded-full border-2 border-white/10 border-t-emerald-400/80 animate-spin" />
+                  <p className="text-sm text-white/30">Carregando...</p>
+                </div>
+              }>
+                <Outlet />
+              </Suspense>
             </PageErrorBoundary>
           </motion.div>
         </main>
