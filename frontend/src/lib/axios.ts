@@ -6,7 +6,10 @@ const api = axios.create({
   withCredentials: true,
 });
 
-let isRefreshing = false;
+// Single shared refresh promise — all concurrent 401s await the same refresh attempt.
+// Using a promise reference instead of a boolean flag ensures waiting callers
+// actually retry only after the refresh resolves, not immediately.
+let refreshPromise: Promise<void> | null = null;
 
 api.interceptors.response.use(
   (res) => res,
@@ -17,15 +20,17 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry && !url.includes('/auth/')) {
       originalRequest._retry = true;
       try {
-        if (!isRefreshing) {
-          isRefreshing = true;
-          await api.post('/auth/refresh');
-          isRefreshing = false;
+        if (!refreshPromise) {
+          refreshPromise = api.post('/auth/refresh').then(
+            () => { refreshPromise = null; },
+            (err) => { refreshPromise = null; return Promise.reject(err); },
+          );
         }
+        await refreshPromise;
         return api(originalRequest);
       } catch {
-        isRefreshing = false;
         window.location.href = '/login';
+        return Promise.reject(error);
       }
     }
     return Promise.reject(error);

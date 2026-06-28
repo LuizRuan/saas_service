@@ -1,4 +1,5 @@
 import { useState, useEffect, type ReactNode } from 'react';
+import { PageErrorBoundary } from '@/components/shared/ErrorBoundary';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
@@ -289,7 +290,9 @@ export function DashboardLayout() {
             transition={{ duration: 0.35, ease: 'easeOut' }}
             className="min-h-full p-4 sm:p-6 lg:p-8"
           >
-            <Outlet />
+            <PageErrorBoundary>
+              <Outlet />
+            </PageErrorBoundary>
           </motion.div>
         </main>
       </div>
