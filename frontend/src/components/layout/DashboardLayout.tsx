@@ -285,8 +285,8 @@ export function DashboardLayout() {
         {/* Page content */}
         <main className="flex-1 overflow-y-auto scrollbar-thin" style={{ background: 'linear-gradient(135deg, #0a0f1e 0%, #0d1530 60%, #080e1c 100%)' }}>
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             transition={{ duration: 0.35, ease: 'easeOut' }}
             className="min-h-full p-4 sm:p-6 lg:p-8"
           >
